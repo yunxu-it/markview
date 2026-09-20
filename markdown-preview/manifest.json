@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "墨览 · MarkView",
+  "version": "1.0.0",
+  "description": "本地 Markdown 预览与可折叠标题目录",
+  "icons": { "16": "icons/icon-16.png", "32": "icons/icon-32.png", "48": "icons/icon-48.png", "128": "icons/icon-128.png" },
+  "action": {
+    "default_title": "墨览 · MarkView",
+    "default_icon": { "16": "icons/icon-16.png", "32": "icons/icon-32.png", "48": "icons/icon-48.png" }
+  },
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [{
+    "matches": ["file:///*"],
+    "include_globs": ["file:///*.md", "file:///*.md#*", "file:///*.markdown", "file:///*.markdown#*", "file:///*.MD", "file:///*.MD#*", "file:///*.mdown", "file:///*.mdown#*"],
+    "js": ["markdown.js", "viewer.js"],
+    "css": ["viewer.css"],
+    "run_at": "document_idle"
+  }]
+}
