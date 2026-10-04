@@ -16,6 +16,11 @@ button:hover { background: var(--soft); }
 #sidebar-resizer:hover::after, #sidebar-resizer:focus-visible::after, .sidebar-resizing #sidebar-resizer::after { background: var(--link); }
 .sidebar-resizing, .sidebar-resizing * { cursor: col-resize !important; user-select: none !important; }
 #toc { color: var(--muted); }
+#toc-search { display: block; width: 100%; margin: 0 0 12px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; color: var(--text); background: var(--soft); font: inherit; }
+#toc-search:disabled { opacity: .6; }
+#toc-search-status { margin: 0 0 12px; font-size: 12px; color: var(--muted); }
+#toc-search-status:empty { display: none; }
+#toc a.toc-match { color: var(--text); font-weight: 600; }
 #toc ul { list-style: none; margin: 0; padding-left: 16px; }
 #toc > ul { padding: 0; }
 #toc li { margin: 4px 0; }

@@ -22,12 +22,14 @@
         <button id="toggle" aria-controls="sidebar" aria-expanded="true">收起目录</button>
       </div></div>
       <input id="file-input" type="file" accept=".md,.markdown,.mdown" hidden>
+      <input id="toc-search" type="search" placeholder="搜索目录" aria-label="搜索目录标题" aria-controls="toc" autocomplete="off">
+      <p id="toc-search-status" role="status"></p>
       <nav id="toc" aria-label="文档章节"></nav>
     </aside>
     <div id="sidebar-resizer" role="separator" tabindex="0" aria-label="调整目录宽度" aria-orientation="vertical" aria-controls="sidebar" title="拖动调整目录宽度，双击恢复默认；方向键微调，Enter 恢复默认"></div>
     <main id="main"><div id="status" role="status"></div><article class="markdown-body" id="article"></article></main>`;
   const $ = id => document.getElementById(id);
-  let updateActiveHeading = () => {}, headingFrame = 0;
+  let updateActiveHeading = () => {}, revealActiveHeading = () => {}, headingFrame = 0;
   const copyTimers = new Set();
   const scheduleHeadingUpdate = () => {
     if (headingFrame) return;
@@ -45,8 +47,57 @@
   const resizer = $('sidebar-resizer');
   const widthKey = 'sidebarWidth';
   const storage = globalThis.chrome?.storage?.local;
+  let positionKey = null, positionReady = false, positionDirty = false, positionTimer = 0;
+  let documentVersion = 0, navigationVersion = 0;
+  history.scrollRestoration = 'manual';
+  const savePosition = () => {
+    clearTimeout(positionTimer);
+    if (!storage || !positionKey || !positionReady || !positionDirty) return;
+    positionDirty = false;
+    const key = positionKey, top = Math.max(0, Math.round(window.scrollY));
+    chrome.runtime.sendMessage({ type: 'reading-position:set', key, top }).then(result => {
+      if (!result?.ok && key === positionKey) positionDirty = true;
+    }).catch(() => { if (key === positionKey) positionDirty = true; });
+  };
+  const queuePositionSave = () => {
+    if (!positionReady) return;
+    positionDirty = true;
+    clearTimeout(positionTimer);
+    positionTimer = setTimeout(savePosition, 250);
+  };
+  const markNavigation = () => { navigationVersion++; };
+  window.addEventListener('scroll', queuePositionSave, { passive: true });
+  window.addEventListener('wheel', markNavigation, { passive: true });
+  window.addEventListener('touchstart', markNavigation, { passive: true });
+  document.addEventListener('pointerdown', markNavigation, { passive: true });
+  document.addEventListener('keydown', markNavigation);
+  window.addEventListener('hashchange', markNavigation);
+  window.addEventListener('pagehide', savePosition);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) savePosition(); });
+  // 后台保存哈希标识、滚动数值和访问时间；异步读取期间若用户已操作，则不再跳动页面。
+  const restorePosition = async (identity, version, navigation) => {
+    if (!storage || !identity) return;
+    try {
+      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(identity));
+      const key = 'readingPosition:' + Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+      const [saved] = await Promise.all([chrome.runtime.sendMessage({ type: 'reading-position:get', key }), widthReady]);
+      if (!saved?.ok) return;
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      if (version !== documentVersion) return;
+      positionKey = key;
+      positionReady = true;
+      const top = saved.top;
+      if (navigation === navigationVersion) {
+        if (location.hash) {
+          try { document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView(); } catch {}
+        } else if (Number.isFinite(top) && top >= 0) window.scrollTo(0, top);
+      }
+      if (navigation !== navigationVersion) queuePositionSave();
+      scheduleHeadingUpdate();
+    } catch { /* 存储或哈希不可用时仍可正常阅读。 */ }
+  };
   let preferredWidth = null, widthChanged = false, drag = null;
-  // 仅保存宽度偏好；窗口缩小时临时限制显示宽度，不覆盖用户原来的设置。
+  // 窗口缩小时临时限制显示宽度，不覆盖用户原来的设置。
   const widthBounds = () => {
     const max = Math.max(1, Math.min(600, innerWidth - (innerWidth <= 760 ? 48 : 320)));
     return { min: Math.min(200, max), max };
@@ -72,11 +123,11 @@
     saveWidth();
   };
   applyWidth();
-  if (storage) storage.get(widthKey).then(settings => {
+  const widthReady = storage ? storage.get(widthKey).then(settings => {
     if (widthChanged || !Number.isFinite(settings[widthKey]) || settings[widthKey] < 200 || settings[widthKey] > 600) return;
     preferredWidth = settings[widthKey];
     applyWidth();
-  }).catch(() => {});
+  }).catch(() => {}) : Promise.resolve();
   resizer.addEventListener('pointerdown', event => {
     if (event.button !== 0 || !event.isPrimary || drag) return;
     event.preventDefault();
@@ -120,7 +171,10 @@
     document.body.classList.toggle('sidebar-hidden', hidden);
     $('toggle').setAttribute('aria-expanded', String(!hidden));
     if (hidden) $('restore').focus();
-    else $('toggle').focus();
+    else {
+      $('toggle').focus();
+      revealActiveHeading();
+    }
   };
   $('toggle').addEventListener('click', () => setSidebar(!document.body.classList.contains('sidebar-hidden')));
   $('restore').addEventListener('click', () => setSidebar(false));
@@ -130,8 +184,26 @@
     event.target.value = '';
     readFile(file);
   });
-  function show(source, name, baseURL, prepared) {
+  let filterToc = () => {};
+  $('toc-search').addEventListener('input', () => filterToc());
+  $('toc-search').addEventListener('keydown', event => {
+    if (event.isComposing) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      $('toc-search').value = '';
+      filterToc();
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      $('toc').querySelector('a.toc-match')?.click();
+    }
+  });
+  function show(source, name, baseURL, prepared, identity = null) {
     const result = prepared ?? renderMarkdown(source, baseURL);
+    savePosition();
+    const version = ++documentVersion, navigation = navigationVersion;
+    positionKey = null;
+    positionReady = false;
+    positionDirty = false;
     copyTimers.forEach(timer => clearTimeout(timer));
     copyTimers.clear();
     $('article').innerHTML = result.html;
@@ -176,6 +248,9 @@
     });
     document.title = name + ' · 墨览 · MarkView';
     $('toc').replaceChildren();
+    $('toc-search').value = '';
+    $('toc-search').disabled = !result.headings.length;
+    $('toc-search-status').textContent = '';
     const tree = { children: [], level: 0 }, stack = [tree];
     for (const heading of result.headings) {
       while (stack.length > 1 && stack.at(-1).level >= heading.level) stack.pop();
@@ -202,9 +277,42 @@
     };
     append(tree.children, $('toc'));
     if (!result.headings.length) $('toc').textContent = '暂无标题';
+    const records = [...$('toc').querySelectorAll('li')].map(item => ({
+      item, link: item.querySelector('a'), details: item.firstElementChild.tagName === 'DETAILS' ? item.firstElementChild : null
+    }));
+    let foldedBeforeSearch = null;
+    filterToc = () => {
+      const query = $('toc-search').value.normalize('NFKC').trim().toLowerCase();
+      if (query && !foldedBeforeSearch) foldedBeforeSearch = new Map(records.filter(record => record.details).map(record => [record.details, record.details.open]));
+      let matches = 0;
+      // 从子节点向父节点过滤，保留匹配标题的完整父级路径。
+      for (let index = records.length - 1; index >= 0; index--) {
+        const { item, link, details } = records[index];
+        const matched = !!query && link.textContent.normalize('NFKC').toLowerCase().includes(query);
+        const childVisible = details && [...details.querySelector('ul').children].some(child => !child.hidden);
+        item.hidden = !!query && !matched && !childVisible;
+        link.classList.toggle('toc-match', matched);
+        if (matched) matches++;
+        if (query && details) details.open = !!childVisible;
+      }
+      if (!query && foldedBeforeSearch) {
+        foldedBeforeSearch.forEach((open, details) => { details.open = open; });
+        foldedBeforeSearch = null;
+      }
+      $('toc-search-status').textContent = query ? (matches ? `找到 ${matches} 个标题` : '没有匹配的标题') : '';
+    };
     const links = new Map([...$('toc').querySelectorAll('a')].map(link => [link.dataset.heading, link]));
     const headings = result.headings.map(heading => document.getElementById(heading.id)).filter(Boolean);
     let activeLink = null;
+    revealActiveHeading = () => {
+      if (!activeLink || document.body.classList.contains('sidebar-hidden') || $('toc-search').value.trim()) return;
+      if (!activeLink.getClientRects().length) return;
+      const sidebar = $('sidebar'), bounds = sidebar.getBoundingClientRect(), linkBounds = activeLink.getBoundingClientRect();
+      const top = bounds.top + 16, bottom = bounds.top + sidebar.clientHeight - 16;
+      // 只滚动侧栏，让当前章节进入可见范围，避免 scrollIntoView 连带滚动正文。
+      if (linkBounds.top < top || linkBounds.height > bottom - top) sidebar.scrollTop += linkBounds.top - top;
+      else if (linkBounds.bottom > bottom) sidebar.scrollTop += linkBounds.bottom - bottom;
+    };
     updateActiveHeading = () => {
       if (!headings.length) return;
       // 二分查找最后一个经过阅读线的标题，长章节内和反向滚动时也保持稳定。
@@ -222,15 +330,17 @@
       link.setAttribute('aria-current', 'location');
       activeLink = link;
       // 仅在章节切换时展开父目录，用户在当前章节内仍可手动折叠。
-      let parent = link.parentElement.closest('details');
+      let parent = $('toc-search').value.trim() ? null : link.parentElement.closest('details');
       while (parent) {
         parent.open = true;
         parent = parent.parentElement.closest('details');
       }
+      revealActiveHeading();
     };
     window.scrollTo(0, 0);
     try { if (location.hash) document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView(); } catch {}
     scheduleHeadingUpdate();
+    restorePosition(identity, version, navigation);
   }
   async function readFile(file) {
     if (!file) return;
@@ -242,7 +352,8 @@
       let result;
       try { result = renderMarkdown(text, chrome.runtime.getURL('')); }
       catch { $('status').textContent = 'Markdown 渲染失败，已保留当前文档。'; return; }
-      show(text, file.name, chrome.runtime.getURL(''), result);
+      history.replaceState(null, '', location.href.split('#')[0]);
+      show(text, file.name, chrome.runtime.getURL(''), result, 'file-content:' + file.name + '\u0000' + text);
       $('status').textContent = '已打开本地文件。相对路径图片请通过 Chrome 直接打开原始 .md 文件查看。';
     } catch { if (request === generation) $('status').textContent = '文件读取失败，请重新选择文件。'; }
   }
@@ -251,7 +362,7 @@
   if (local) {
     let name = location.pathname.split('/').pop();
     try { name = decodeURIComponent(name); } catch {}
-    show(original, name, location.href, initialResult);
+    show(original, name, location.href, initialResult, 'file-url:' + location.href.split('#')[0]);
   } else {
     show('# 墨览 · MarkView\n\n将 Markdown 文件拖到此页面，或在 Chrome 中直接打开本地 `.md` 文件。\n\n## 本地文件自动预览\n\n在 Chrome 扩展详情中开启 **允许访问文件网址**，然后在 Chrome 中打开 `.md` 文件。\n\n## 阅读操作\n\n- 点击目录标题跳转到对应章节\n- 点击标题前的箭头展开或收起子目录\n- 点击目录区的按钮收起整个侧栏\n\n## 支持内容\n\n表格、代码块、任务列表、引用、图片和链接。原始 HTML 按文本显示。', '欢迎使用', location.href);
   }

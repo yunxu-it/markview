@@ -47,7 +47,7 @@ globalThis.renderMarkdown = function (source, baseURL) {
     return '<span class="syntax-' + kind + '">' + escape(part) + '</span>';
   }).join('');
   const headings = [];
-  const used = new Map(['toggle', 'restore', 'sidebar', 'toc', 'main', 'status', 'article', 'open-file', 'file-input', 'sidebar-resizer'].map(id => [id, true]));
+  const used = new Map(['toggle', 'restore', 'sidebar', 'toc', 'main', 'status', 'article', 'open-file', 'file-input', 'sidebar-resizer', 'toc-search', 'toc-search-status'].map(id => [id, true]));
   const heading = (level, text) => {
     const plain = text.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/[*`~]/g, '');
     const slug = plain.toLowerCase().trim().replace(/[^\p{L}\p{N}_\s-]/gu, '').replace(/\s/g, '-') || 'section';
