@@ -11,11 +11,31 @@ globalThis.renderMarkdown = function (source, baseURL) {
     const tokens = [];
     const token = html => `\u0000${tokens.push(html) - 1}\u0000`;
     text = text.replace(/\u0000/g, '').replace(/`([^`]+)`/g, (_, code) => token(`<code>${escape(code)}</code>`));
-    text = text.replace(/(!?)\[([^\]]*)\]\(([^\s)]+)(?:\s+"[^"]*")?\)/g, (_, image, label, target) => {
+    // 按括号深度读取目标地址，避免路径中的括号提前结束链接。
+    let linked = '', consumed = 0;
+    for (const match of text.matchAll(/(!?)\[([^\]]*)\]\(/g)) {
+      const [prefix, image, label] = match, offset = match.index;
+      if (offset < consumed) continue;
+      let end = offset + prefix.length, depth = 1;
+      for (; end < text.length && depth; end++) {
+        if (text[end] === '\\') { end++; continue; }
+        if (text[end] === '"' && /\s/.test(text[end - 1])) {
+          const titleEnd = text.indexOf('"', end + 1);
+          if (titleEnd !== -1) { end = titleEnd; continue; }
+        }
+        if (text[end] === '(') depth++;
+        if (text[end] === ')') depth--;
+      }
+      if (depth) continue;
+      const destination = text.slice(offset + prefix.length, end - 1).match(/^([^\s]+?)(?:\s+"[^"]*")?$/);
+      if (!destination) continue;
+      const target = destination[1].replace(/\\([()\\])/g, '$1');
       const href = target.startsWith('#') ? escape(target) : safeURL(target);
-      if (!href) return label;
-      return token(image ? `<img src="${href}" alt="${escape(label)}" loading="lazy">` : `<a href="${href}">${escape(label)}</a>`);
-    });
+      const html = !href ? escape(label) : image ? `<img src="${href}" alt="${escape(label)}" loading="lazy">` : `<a href="${href}"${/^https?:/i.test(href) ? ' target="_blank" rel="noopener noreferrer"' : ''}>${escape(label)}</a>`;
+      linked += text.slice(consumed, offset) + token(html);
+      consumed = end;
+    }
+    text = linked + text.slice(consumed);
     text = escape(text).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/__(.+?)__/g, '<strong>$1</strong>')
       .replace(/~~(.+?)~~/g, '<del>$1</del>').replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
     return text.replace(/\u0000(\d+)\u0000/g, (_, index) => tokens[Number(index)]);
@@ -27,7 +47,7 @@ globalThis.renderMarkdown = function (source, baseURL) {
     return '<span class="syntax-' + kind + '">' + escape(part) + '</span>';
   }).join('');
   const headings = [];
-  const used = new Map(['toggle', 'restore', 'sidebar', 'toc', 'main', 'status', 'article'].map(id => [id, true]));
+  const used = new Map(['toggle', 'restore', 'sidebar', 'toc', 'main', 'status', 'article', 'open-file', 'file-input', 'sidebar-resizer'].map(id => [id, true]));
   const heading = (level, text) => {
     const plain = text.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/[*`~]/g, '');
     const slug = plain.toLowerCase().trim().replace(/[^\p{L}\p{N}_\s-]/gu, '').replace(/\s/g, '-') || 'section';
@@ -37,7 +57,35 @@ globalThis.renderMarkdown = function (source, baseURL) {
     headings.push({ level, text: plain, id });
     return `<h${level} id="${escape(id)}">${inline(text)}</h${level}>`;
   };
-  const cells = line => line.trim().replace(/^\||\|$/g, '').split(/(?<!\\)\|/).map(cell => cell.trim().replace(/\\\|/g, '|'));
+  // 只在代码片段之外分列，同时保留转义竖线作为单元格内容。
+  const cells = line => {
+    const values = [], text = line.trim();
+    let cell = '';
+    for (let index = 0; index < text.length; index++) {
+      if (text[index] === '\\' && index + 1 < text.length) {
+        cell += text[index + 1] === '|' ? '|' : text[index] + text[index + 1];
+        index++; continue;
+      }
+      if (text[index] === '`') {
+        const run = text.slice(index).match(/^`+/)[0];
+        let end = index + run.length;
+        while ((end = text.indexOf(run, end)) !== -1) {
+          if (text[end - 1] !== '`' && text[end + run.length] !== '`') break;
+          end += run.length;
+        }
+        if (end !== -1) {
+          cell += text.slice(index, end + run.length);
+          index = end + run.length - 1; continue;
+        }
+      }
+      if (text[index] === '|') { values.push(cell.trim()); cell = ''; }
+      else cell += text[index];
+    }
+    values.push(cell.trim());
+    if (text.startsWith('|')) values.shift();
+    if (text.endsWith('|') && values.at(-1) === '') values.pop();
+    return values.length ? values : [''];
+  };
   const lines = source.replace(/\r\n?/g, '\n').split('\n');
   function blocks(lines) {
     let html = '', i = 0;
