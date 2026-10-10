@@ -80,7 +80,7 @@
     try {
       const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(identity));
       const key = 'readingPosition:' + Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
-      const [saved] = await Promise.all([chrome.runtime.sendMessage({ type: 'reading-position:get', key }), widthReady]);
+      const [saved] = await Promise.all([chrome.runtime.sendMessage({ type: 'reading-position:get', key }), widthReady, sidebarReady]);
       if (!saved?.ok) return;
       await new Promise(resolve => requestAnimationFrame(resolve));
       if (version !== documentVersion) return;
@@ -167,15 +167,32 @@
     saveWidth();
   });
   window.addEventListener('resize', applyWidth);
-  const setSidebar = hidden => {
+  const sidebarKey = 'sidebarHidden';
+  let sidebarChanged = false;
+  const saveSidebar = async hidden => {
+    if (!storage) return;
+    try { await storage.set({ [sidebarKey]: hidden }); }
+    catch { /* 存储不可用时仍可正常展开和收起侧栏。 */ }
+  };
+  const setSidebar = (hidden, remember = true) => {
     document.body.classList.toggle('sidebar-hidden', hidden);
     $('toggle').setAttribute('aria-expanded', String(!hidden));
-    if (hidden) $('restore').focus();
-    else {
-      $('toggle').focus();
-      revealActiveHeading();
+    $('restore').setAttribute('aria-expanded', String(!hidden));
+    if (remember) {
+      sidebarChanged = true;
+      saveSidebar(hidden);
+      (hidden ? $('restore') : $('toggle')).focus();
     }
+    if (!hidden) revealActiveHeading();
   };
+  // 恢复偏好不抢焦点；读取期间若已切换侧栏，则保留用户刚选择的状态。
+  const sidebarReady = (async () => {
+    if (!storage) return;
+    try {
+      const settings = await storage.get(sidebarKey);
+      if (!sidebarChanged && typeof settings[sidebarKey] === 'boolean') setSidebar(settings[sidebarKey], false);
+    } catch { /* 未保存偏好或读取失败时保持默认展开。 */ }
+  })();
   $('toggle').addEventListener('click', () => setSidebar(!document.body.classList.contains('sidebar-hidden')));
   $('restore').addEventListener('click', () => setSidebar(false));
   $('open-file').addEventListener('click', () => $('file-input').click());
