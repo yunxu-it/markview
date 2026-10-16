@@ -66,8 +66,40 @@
   const resizer = $('sidebar-resizer');
   const widthKey = 'sidebarWidth';
   const storage = globalThis.chrome?.storage?.local;
-  let positionKey = null, positionReady = false, positionDirty = false, positionTimer = 0;
   let documentVersion = 0, navigationVersion = 0;
+  const preferences = globalThis.MarkViewSettings;
+  let readingSettings = { ...preferences.defaults };
+  const changedReadingKeys = new Set();
+  const applyReadingSettings = settings => {
+    readingSettings = preferences.apply(settings);
+    scheduleHeadingUpdate();
+  };
+  applyReadingSettings(readingSettings);
+  if (storage) chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== 'local') return;
+    const updated = {};
+    for (const key of preferences.keys) {
+      if (!Object.hasOwn(changes, key)) continue;
+      changedReadingKeys.add(key);
+      updated[key] = changes[key].newValue;
+    }
+    if (!Object.keys(updated).length) return;
+    const next = preferences.normalize({ ...readingSettings, ...updated });
+    if (preferences.keys.every(key => next[key] === readingSettings[key])) return;
+    // 图标弹出页的调整也属于用户操作，不能再被待完成的阅读位置恢复覆盖。
+    navigationVersion++;
+    applyReadingSettings(next);
+  });
+  // 先订阅再读取，逐项保留读取期间收到的新设置，避免旧快照覆盖实时调整。
+  const readingSettingsReady = (async () => {
+    if (!storage) return;
+    try {
+      const saved = await storage.get(preferences.keys), initial = { ...readingSettings };
+      for (const key of preferences.keys) if (!changedReadingKeys.has(key)) initial[key] = saved[key];
+      applyReadingSettings(initial);
+    } catch { /* 读取失败时保留默认值或已收到的实时设置。 */ }
+  })();
+  let positionKey = null, positionReady = false, positionDirty = false, positionTimer = 0;
   history.scrollRestoration = 'manual';
   const savePosition = () => {
     clearTimeout(positionTimer);
@@ -99,7 +131,7 @@
     try {
       const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(identity));
       const key = 'readingPosition:' + Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
-      const [saved] = await Promise.all([chrome.runtime.sendMessage({ type: 'reading-position:get', key }), widthReady, sidebarReady]);
+      const [saved] = await Promise.all([chrome.runtime.sendMessage({ type: 'reading-position:get', key }), widthReady, sidebarReady, readingSettingsReady]);
       if (!saved?.ok) return;
       await new Promise(resolve => requestAnimationFrame(resolve));
       if (version !== documentVersion) return;
@@ -438,7 +470,7 @@
       if (request !== folderGeneration) return;
       if (error.name === 'AbortError') return;
       $('files-hint').textContent = error.name === 'SecurityError'
-        ? '当前页面不允许只读目录访问，请点击扩展图标进入预览页后再试。也可使用下方兼容方式。'
+        ? '当前页面不允许只读目录访问，请点击扩展图标，选择“打开预览页”后再试。也可使用下方兼容方式。'
         : '目录读取失败，请重新选择文件夹。原文档和文件树已保留。';
       $('folder-fallback').hidden = false;
     }
@@ -661,4 +693,41 @@
     show('# 墨览 · MarkView\n\n点击侧栏的 **打开**，选择 **打开文件** 或 **打开文件夹**。也可拖入 Markdown，或在 Chrome 中直接打开本地 `.md` 文件。\n\n## 本地文件自动预览\n\n在 Chrome 扩展详情中开启 **允许访问文件网址**，然后在 Chrome 中打开 `.md` 文件。\n\n## 阅读操作\n\n- 点击 **章节** 查看当前文档标题并跳转章节\n- 打开文件夹后，点击 **文件** 浏览 Markdown 文件树并切换文档\n- 文件夹自动记住，刷新后尝试恢复；权限失效时点击 **继续读取文件夹**\n- 通过 **打开 → 忘记文件夹** 清除目录记忆\n- 只读模式每次点击文档会读取最新内容\n\n## 支持内容\n\n表格、代码块、任务列表、引用、图片和链接。原始 HTML 按文本显示。', '欢迎使用', location.href);
   }
   restoreFolder();
+  const registerPdfMessages = async () => {
+    let ownerTabId = null, printPending = false;
+    if (!local) {
+      try { ownerTabId = (await chrome.tabs.getCurrent())?.id; }
+      catch { return; }
+      if (!Number.isInteger(ownerTabId)) return;
+    }
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (sender.id !== chrome.runtime.id || !['markview:pdf:status', 'markview:pdf:export'].includes(message?.type)) return false;
+      if (!local && message.tabId !== ownerTabId) return false;
+      if (message.type === 'markview:pdf:status') {
+        sendResponse({ canExport: !!currentDocument && !printPending, documentVersion });
+        return false;
+      }
+      if (!currentDocument || printPending || message.documentVersion !== documentVersion) {
+        sendResponse({ ok: false });
+        return false;
+      }
+      printPending = true;
+      const version = documentVersion;
+      closeOpenMenu();
+      // 先让弹出页收到确认并关闭，再打开正文页的打印预览，避免打印弹出页本身。
+      sendResponse({ ok: true });
+      setTimeout(() => {
+        try {
+          if (version !== documentVersion || !currentDocument) {
+            $('status').textContent = '当前文档已变化，请重新点击扩展图标导出 PDF。';
+            return;
+          }
+          window.print();
+        } catch { $('status').textContent = '无法打开打印预览，请使用 Ctrl+P 后选择另存为 PDF。'; }
+        finally { printPending = false; }
+      }, 100);
+      return false;
+    });
+  };
+  registerPdfMessages();
 })();

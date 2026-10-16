@@ -1,4 +1,3 @@
-:root { color-scheme: light; --bg: #fff; --soft: #f6f8fa; --line: #d1d9e0; --text: #1f2328; --muted: #59636e; --link: #0969da; --sidebar: 280px; }
 * { box-sizing: border-box; }
 html { scroll-padding-top: 16px; }
 body { margin: 0; color: var(--text); background: var(--bg); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; }
@@ -22,7 +21,7 @@ button:hover { background: var(--soft); }
 .open-options button { width: 100%; text-align: left; white-space: nowrap; }
 .sidebar-views { display: flex; gap: 3px; margin-bottom: 12px; padding: 3px; border-radius: 8px; background: var(--soft); }
 .sidebar-views button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 1; min-height: 28px; padding: 4px 10px; border: 0; border-radius: 5px; color: var(--muted); background: transparent; font-size: 13px; }
-.sidebar-views button:hover { color: var(--text); background: #eaeef2; }
+.sidebar-views button:hover { color: var(--text); background: var(--hover); }
 .sidebar-views button[aria-pressed="true"] { color: var(--text); background: var(--bg); font-weight: 600; box-shadow: 0 1px 3px #1f23281a; }
 #resume-folder, #folder-fallback { width: 100%; margin-bottom: 12px; }
 #files-hint { margin: 0 0 12px; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
@@ -37,7 +36,7 @@ button:hover { background: var(--soft); }
 #toc summary::before, #files summary::before { content: ''; flex: 0 0 7px; width: 7px; height: 7px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); }
 #toc details[open] > summary::before, #files details[open] > summary::before { transform: rotate(45deg); }
 #files button { width: 100%; padding: 5px 6px; border: 0; text-align: left; overflow-wrap: anywhere; color: var(--muted); }
-#files button[aria-current] { background: #ddf4ff; color: var(--link); font-weight: 600; }
+#files button[aria-current] { background: var(--selected); color: var(--link); font-weight: 600; }
 #sidebar-resizer { position: fixed; top: 0; bottom: 0; left: calc(var(--sidebar) - 4px); width: 8px; z-index: 7; cursor: col-resize; touch-action: none; }
 #sidebar-resizer::after { content: ''; position: absolute; top: 0; bottom: 0; left: 3px; width: 2px; background: transparent; }
 #sidebar-resizer:hover::after, #sidebar-resizer:focus-visible::after, .sidebar-resizing #sidebar-resizer::after { background: var(--link); }
@@ -52,7 +51,7 @@ button:hover { background: var(--soft); }
 #toc > ul { padding: 0; }
 #toc li { margin: 4px 0; }
 #toc a { display: inline-block; padding: 5px 6px; border-radius: 5px; color: var(--muted); text-decoration: none; overflow-wrap: anywhere; max-width: 100%; }
-#toc a:hover, #toc a[aria-current] { background: #ddf4ff; color: var(--link); }
+#toc a:hover, #toc a[aria-current] { background: var(--selected); color: var(--link); }
 #toc summary { cursor: pointer; }
 #toc summary a { flex: 1; min-width: 0; max-width: none; }
 #main { margin: 0 0 0 var(--sidebar); padding: 24px 24px 80px; }
@@ -62,7 +61,7 @@ button:hover { background: var(--soft); }
 .sidebar-hidden #restore { display: block; }
 #status { margin: 0 0 20px; color: var(--muted); font-size: 13px; }
 #status:empty { display: none; }
-.markdown-body { max-width: none; margin: 0; font-size: 16px; line-height: 1.6; overflow-wrap: break-word; }
+.markdown-body { max-width: var(--article-width); margin: 0 auto; font-family: var(--article-font, inherit); font-size: var(--article-size); line-height: var(--article-leading); overflow-wrap: break-word; }
 .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 { margin: 24px 0 16px; font-weight: 600; line-height: 1.25; scroll-margin-top: 0; }
 .markdown-body > :first-child { margin-top: 0; }
 .markdown-body h1 { font-size: 2em; border-bottom: 1px solid var(--line); padding-bottom: .3em; }
@@ -71,11 +70,13 @@ button:hover { background: var(--soft); }
 .markdown-body h4 { font-size: 1em; }
 .markdown-body h5 { font-size: .875em; }
 .markdown-body h6 { font-size: .85em; color: var(--muted); }
+:root[data-theme="report"] .markdown-body h1 { text-align: center; border-bottom: 0; }
+:root[data-theme="report"] .markdown-body h2 { font-size: 1.4em; }
 .markdown-body p, .markdown-body blockquote, .markdown-body ul, .markdown-body ol, .markdown-body pre, .table-scroll { margin: 0 0 16px; }
 .markdown-body a { color: var(--link); text-decoration: none; }
 .markdown-body a:hover { text-decoration: underline; }
 .markdown-body img { max-width: 100%; height: auto; }
-.markdown-body code { font: 85%/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; background: #afb8c133; border-radius: 6px; padding: .2em .4em; }
+.markdown-body code { font: 85%/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; background: var(--code-bg); border-radius: 6px; padding: .2em .4em; }
 .markdown-body pre { padding: 16px; overflow: auto; background: var(--soft); border-radius: 6px; }
 .markdown-body pre code { padding: 0; background: none; white-space: pre; }
 .code-block { position: relative; margin: 0 0 16px; }
@@ -97,6 +98,57 @@ button:hover { background: var(--soft); }
 .align-left { text-align: left; } .align-right { text-align: right; } .align-center { text-align: center; }
 .markdown-body hr { height: .25em; padding: 0; margin: 24px 0; border: 0; background: var(--line); }
 @media (max-width: 760px) { :root { --sidebar: 240px; } #sidebar { z-index: 5; box-shadow: 8px 0 24px #0001; } #main { margin-left: 0; padding: 24px 16px 60px; } }
-@media print { .skip-link, #restore, .sidebar-hidden #restore, #sidebar, #sidebar-resizer, #status, .copy-code { display: none; } #main { margin: 0; padding: 0; } .markdown-body { max-width: none; } .markdown-body .code-block pre { padding-top: 16px; } }
+@page { margin: 16mm; }
+@media print {
+  .skip-link, #restore, .sidebar-hidden #restore, #sidebar, #sidebar-resizer, #status, .copy-code { display: none; }
+  #main { margin: 0; padding: 0; }
+  body { print-color-adjust: exact; }
+  .markdown-body { max-width: none; margin: 0; }
+  .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 { break-after: avoid-page; }
+  .markdown-body p, .markdown-body li { orphans: 3; widows: 3; }
+  .markdown-body pre { overflow: visible; }
+  .markdown-body pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .markdown-body .code-block pre { padding-top: 16px; }
+  .table-scroll { overflow: visible; }
+  .markdown-body table { table-layout: fixed; }
+  .markdown-body th, .markdown-body td { overflow-wrap: anywhere; }
+  .markdown-body tr, .markdown-body img { break-inside: avoid-page; }
+  .markdown-body a { overflow-wrap: anywhere; }
+}
 
-.syntax-keyword { color: #cf222e; } .syntax-string { color: #0a3069; } .syntax-comment { color: #6e7781; } .syntax-number { color: #0550ae; }
+.syntax-keyword { color: var(--keyword); } .syntax-string { color: var(--string); } .syntax-comment { color: var(--comment); } .syntax-number { color: var(--number); }
+.syntax-property { color: var(--property, var(--string)); } .syntax-attribute { color: var(--attribute, var(--string)); } .syntax-operator { color: var(--operator, var(--keyword)); }
+.syntax-function { color: var(--function, var(--keyword)); } .syntax-variable { color: var(--variable, var(--text)); } .syntax-type { color: var(--type, var(--keyword)); }
+.syntax-tag { color: var(--tag, var(--keyword)); } .syntax-selector { color: var(--selector, var(--string)); } .syntax-punctuation { color: var(--punctuation, var(--muted)); }
+
+/* 将 Bear 的正文样式限定在当前主题内，保留共用的宽度设置与打印分页规则。 */
+:root[data-theme="bear"] #sidebar { background: var(--soft); }
+:root[data-theme="bear"] #files button:not([aria-current]) { background: transparent; }
+:root[data-theme="bear"] #files button:not([aria-current]):hover { background: var(--hover); }
+:root[data-theme="bear"] .markdown-body :is(h1, h2, h3, h4, h5, h6) { margin: 1em 0 .37em; padding: 0; border: 0; color: #262626; font-weight: 500; line-height: 1.4; }
+:root[data-theme="bear"] .markdown-body h1 { font-size: 1.625em; }
+:root[data-theme="bear"] .markdown-body h2 { font-size: 1.375em; }
+:root[data-theme="bear"] .markdown-body h3 { font-size: 1.25em; }
+:root[data-theme="bear"] .markdown-body h4 { font-size: 1.125em; }
+:root[data-theme="bear"] .markdown-body h5, :root[data-theme="bear"] .markdown-body h6 { font-size: 1em; }
+:root[data-theme="bear"] .markdown-body h6 { color: var(--muted); }
+:root[data-theme="bear"] .markdown-body > :first-child { margin-top: 0; }
+:root[data-theme="bear"] .markdown-body p { margin-bottom: .9em; }
+:root[data-theme="bear"] .markdown-body ul, :root[data-theme="bear"] .markdown-body ol { padding-left: 1.45em; }
+:root[data-theme="bear"] .markdown-body li::marker { color: var(--bear-accent); }
+:root[data-theme="bear"] .markdown-body blockquote { padding: 0 1em; border-left: 2px solid var(--bear-accent); }
+:root[data-theme="bear"] .markdown-body code { font-family: var(--code-font); }
+:root[data-theme="bear"] .markdown-body :not(pre) > code { margin: 0 2px; padding: 0 2px; border: 1px solid var(--code-border); border-radius: 4px; color: var(--code-text); line-height: 1.6; }
+:root[data-theme="bear"] .markdown-body pre { border: 1px solid var(--code-border); border-radius: 3px; color: var(--code-text); background: var(--code-bg); font: .875rem/1.6 var(--code-font); tab-size: 4; }
+:root[data-theme="bear"] .markdown-body .code-block pre { padding: 10px; }
+:root[data-theme="bear"] .markdown-body pre code { display: block; font: inherit; color: inherit; }
+/* 复制按钮单独占列，不遮住可横向滚动的代码；打印时恢复普通块布局与代码边框。 */
+@media screen {
+  :root[data-theme="bear"] .code-block { display: grid; grid-template-columns: minmax(0, 1fr) 84px; overflow: hidden; border: 1px solid var(--code-border); border-radius: 3px; background: var(--code-bg); }
+  :root[data-theme="bear"] .markdown-body .code-block pre { min-width: 0; border: 0; border-radius: 0; }
+  :root[data-theme="bear"] .copy-code { position: static; align-self: start; justify-self: end; margin: 8px; }
+}
+:root[data-theme="bear"] .markdown-body th, :root[data-theme="bear"] .markdown-body td { padding: .65em .85em; border: 0; border-bottom: 1px solid var(--line); }
+:root[data-theme="bear"] .markdown-body thead { background: var(--soft); }
+:root[data-theme="bear"] .markdown-body tr:nth-child(even) { background: transparent; }
+:root[data-theme="bear"] .markdown-body hr { height: 1px; margin: 1.4rem 0; background: var(--line); }

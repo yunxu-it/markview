@@ -1,0 +1,29 @@
+* { box-sizing: border-box; }
+body { width: 340px; margin: 0; padding: 20px; color: var(--text); background: var(--bg); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; }
+h1 { margin: 0 0 6px; font-size: 18px; }
+.settings-description { margin: 0 0 20px; color: var(--muted); font-size: 12px; }
+.settings-field { margin-bottom: 20px; }
+.settings-field > label { display: block; margin-bottom: 8px; }
+.theme-control { position: relative; }
+#theme-select { appearance: none; width: 100%; min-width: 0; min-height: 42px; padding: 10px 44px 10px 14px; border: 1px solid var(--line); border-radius: 6px; color: var(--text); background: var(--bg); font: inherit; }
+.theme-arrow { position: absolute; top: 50%; right: 14px; width: 16px; height: 16px; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+@supports (appearance: base-select) {
+  #theme-select, #theme-select::picker(select) { appearance: base-select; }
+  #theme-select::picker-icon { display: none; }
+  #theme-select::picker(select) { padding: 6px; border: 1px solid var(--line); border-radius: 6px; color: var(--text); background: var(--bg); font: inherit; }
+  #theme-select option { padding: 10px 12px; border-radius: 4px; }
+  #theme-select option:hover, #theme-select option:checked { color: var(--link); background: var(--selected); }
+}
+.settings-label, .width-limits, .settings-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#article-width-value { color: var(--muted); font-variant-numeric: tabular-nums; }
+#article-width { display: block; width: 100%; min-height: 32px; margin: 8px 0 0; accent-color: var(--link); cursor: pointer; }
+.width-limits, #article-width-hint, #settings-status, #pdf-hint { color: var(--muted); font-size: 12px; }
+#article-width-hint { margin: 12px 0 0; }
+#settings-status { margin: 0 0 16px; }
+#settings-status:empty { display: none; }
+#export-pdf { width: 100%; margin-top: 16px; }
+#pdf-hint { margin: 8px 0 0; }
+button { padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; color: var(--text); background: var(--bg); font: inherit; cursor: pointer; }
+button:hover { background: var(--soft); }
+:disabled { opacity: .6; cursor: default; }
+:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; }

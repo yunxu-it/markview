@@ -1,7 +1,3 @@
-chrome.action.onClicked.addListener(() => {
-  chrome.tabs.create({ url: chrome.runtime.getURL('viewer.html') });
-});
-
 const positionKeyPattern = /^readingPosition:[a-f0-9]{64}$/;
 const positionLimit = 200;
 let positionQueue = Promise.resolve();

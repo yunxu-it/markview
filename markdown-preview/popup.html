@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>墨览 · 阅读设置</title>
+  <link rel="stylesheet" href="themes.css">
+  <link rel="stylesheet" href="popup.css">
+  <script src="settings.js" defer></script>
+  <script src="popup.js" defer></script>
+</head>
+<body>
+  <h1>阅读设置</h1>
+  <p class="settings-description">自动保存，并同步到已打开的 Markdown 预览页。</p>
+  <div class="settings-field"><label for="theme-select">主题</label><div class="theme-control"><select id="theme-select" name="theme" disabled>
+    <option value="github">GitHub</option>
+    <option value="warm">暖白阅读</option>
+    <option value="dark">深色</option>
+    <option value="report">报告</option>
+    <option value="bear">Bear · 熊掌记</option>
+  </select><svg class="theme-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></div></div>
+  <div class="settings-field">
+    <div class="settings-label"><label for="article-width">正文最大宽度</label><output id="article-width-value" for="article-width">铺满</output></div>
+    <input id="article-width" type="range" min="480" max="1620" step="20" value="1620" aria-valuetext="铺满" aria-describedby="article-width-hint" disabled>
+    <div class="width-limits" aria-hidden="true"><span>480px</span><span>铺满</span></div>
+    <p id="article-width-hint">480–1600px，最右侧为铺满。小窗口自动适应；PDF 按纸张宽度排版。</p>
+  </div>
+  <p id="settings-status" role="status"></p>
+  <div class="settings-actions"><button id="reset-reading-settings" type="button" disabled>恢复默认</button><button id="open-viewer" type="button">打开预览页</button></div>
+  <button id="export-pdf" type="button" title="打开当前文档的打印预览，选择另存为 PDF" disabled>导出 PDF</button>
+  <p id="pdf-hint" role="status">正在检查当前文档…</p>
+</body>
+</html>

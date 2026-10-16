@@ -1,0 +1,35 @@
+Bear Theme with Typora - adapted for MarkView
+Source: https://gist.github.com/Kenshin/e5adc79da3149315bdfd72a35b70d65e
+Source revision: 4f51ed827eb2ceb2eedce1a92111d61ca09f711a
+License source: https://github.com/Kenshin/mduikit/blob/master/LICENSE
+Additional visual reference: https://theme.typora.io/theme/Bear/
+Palette and layout reference: https://github.com/imageslr/mweb-themes
+
+MarkView adapts the Bear palette, red list markers and blockquote accent
+to its existing preview DOM. The current layout and lexer are independently
+implemented, referencing the imageslr Red Graphite palette and code metrics.
+Code uses a white surface, thin border, monospace font and semantic colors.
+Interactive red text uses a darker shade for readability. Fonts use local
+system fallbacks, and reading width remains controlled by the user's setting.
+
+MIT License
+
+Copyright (c) 2018 Kenshin Wang
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

@@ -40,12 +40,109 @@ globalThis.renderMarkdown = function (source, baseURL) {
       .replace(/~~(.+?)~~/g, '<del>$1</del>').replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
     return text.replace(/\u0000(\d+)\u0000/g, (_, index) => tokens[Number(index)]);
   };
-  // 基础词法着色，先转义再输出，避免代码内容成为可执行 HTML。
-  const highlight = code => code.split(/("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\/\/[^\n]*|\b(?:const|let|var|function|return|if|else|class|new|import|from|export|async|await|true|false|null|def|val|fun|public|private|void)\b|\b\d+(?:\.\d+)?\b)/g).map((part, index) => {
-    if (index % 2 === 0) return escape(part);
-    const kind = /^['"]/.test(part) ? 'string' : /^\/\//.test(part) ? 'comment' : /^\d/.test(part) ? 'number' : 'keyword';
-    return '<span class="syntax-' + kind + '">' + escape(part) + '</span>';
-  }).join('');
+  const languageGroups = {
+    clike: 'js javascript jsx ts typescript tsx kotlin kt kts java c h cpp c++ cc cxx csharp c# cs go golang rust rs swift',
+    powershell: 'powershell ps ps1 pwsh', shell: 'bash sh shell zsh', python: 'python py',
+    json: 'json jsonc', yaml: 'yaml yml', sql: 'sql', css: 'css scss less', markup: 'html htm xml svg'
+  };
+  const languages = new Map(Object.entries(languageGroups).flatMap(([group, names]) => names.split(' ').map(name => [name, group])));
+  const keywordGroups = {
+    clike: 'as async await break case catch class const continue debugger default delete do else enum export extends false final finally for from fun function if implements import in instanceof interface internal is let namespace native new null object of open operator out override package private protected public record return sealed self static struct super suspend switch synchronized this throw throws trait true try type typeof undefined use using val var virtual void volatile when while with yield fn impl mut pub match defer guard func init nil protocol some',
+    powershell: 'begin break catch class clean continue data define do dynamicparam else elseif end enum exit filter finally for foreach from function if in param process return switch throw trap try until using var while',
+    shell: 'case do done elif else esac export false fi for function if in local readonly return select then true until while',
+    python: 'and as assert async await break case class continue def del elif else except false finally for from global if import in is lambda match none nonlocal not or pass raise return true try while with yield',
+    json: 'true false null', yaml: 'true false null yes no on off',
+    sql: 'add all alter and as asc begin between by case check column commit constraint create cross database default delete desc distinct drop else end exists false foreign from full group having in index inner insert into is join key left like limit not null offset on or order outer primary references right rollback select set table then true union unique update values view when where with',
+    css: 'important inherit initial unset revert'
+  };
+  const keywords = Object.fromEntries(Object.entries(keywordGroups).map(([group, words]) => [group, new Set(words.split(' '))]));
+  const span = (kind, text) => kind ? '<span class="syntax-' + kind + '">' + escape(text) + '</span>' : escape(text);
+  /**
+   * 按语言分组进行轻量词法着色，字符串和注释作为整体读取，所有原文均转义输出。
+   * @param {string} code 原始代码，保留空白与换行供显示和复制
+   * @param {string} info 围栏中的语言说明，未知语言按纯文本显示
+   * @return {string} 仅含安全 span 与转义文本的 HTML
+   */
+  const highlight = (code, info) => {
+    const language = info.trim().toLowerCase().split(/\s+/)[0], group = languages.get(language);
+    if (!group) return escape(code);
+    const rules = [['space', /\s+/]];
+    const comments = [];
+    if (group === 'clike' || language === 'jsonc' || ['scss', 'less'].includes(language)) comments.push(/\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|(?![\s\S]))/);
+    if (language === 'css') comments.push(/\/\*[\s\S]*?(?:\*\/|(?![\s\S]))/);
+    if (['powershell', 'shell', 'python', 'yaml'].includes(group)) comments.push(/#[^\n]*/);
+    if (group === 'powershell') comments.unshift(/<#[\s\S]*?(?:#>|(?![\s\S]))/);
+    if (group === 'sql') comments.push(/--[^\n]*|\/\*[\s\S]*?(?:\*\/|(?![\s\S]))/);
+    if (group === 'markup') comments.push(/<!--[\s\S]*?(?:-->|(?![\s\S]))/);
+    if (comments.length) rules.push(['comment', new RegExp(comments.map(pattern => pattern.source).join('|'))]);
+    const strings = [];
+    if (group === 'python') strings.push(/(?:[fFrRuUbB]{0,2})(?:"""[\s\S]*?(?:"""|(?![\s\S]))|'''[\s\S]*?(?:'''|(?![\s\S])))/);
+    if (['kotlin', 'kt', 'kts', 'java', 'swift'].includes(language)) strings.push(/"""[\s\S]*?(?:"""|(?![\s\S]))/);
+    if (group === 'powershell') {
+      strings.push(/@'[\s\S]*?(?:^'@|(?![\s\S]))|@"[\s\S]*?(?:^"@|(?![\s\S]))/);
+      strings.push(/'(?:''|[^'])*(?:'|(?![\s\S]))|"(?:`[\s\S]|""|[^"`])*(?:"|(?![\s\S]))/);
+    } else {
+      strings.push(/"(?:\\[\s\S]|[^"\\\n])*(?:"|(?=\n|$))|'(?:\\[\s\S]|[^'\\\n])*(?:'|(?=\n|$))/);
+      if (group === 'clike' && ['js', 'javascript', 'jsx', 'ts', 'typescript', 'tsx'].includes(language)) strings.unshift(/`(?:\\[\s\S]|[^`\\])*(?:`|(?![\s\S]))/);
+    }
+    rules.push(['string', new RegExp(strings.map(pattern => pattern.source).join('|'))]);
+    if (group === 'markup') rules.push(['tag', /<\/?[A-Za-z][\w:.-]*/]);
+    if (['powershell', 'shell'].includes(group)) rules.push(['variable', /\$(?:\{[^}\n]*\}|[A-Za-z_][\w]*(?::[A-Za-z_][\w]*)?|[0-9?@#$*!_-])/]);
+    if (group === 'css') rules.push(['variable', /(?:--|\$)[A-Za-z_][\w-]*/], ['selector', /[.#][A-Za-z_][\w-]*|@[A-Za-z_][\w-]*/]);
+    if (['powershell', 'shell'].includes(group)) rules.push(['attribute', /--?[A-Za-z][\w-]*/]);
+    if (group === 'clike') rules.push(['attribute', /@[A-Za-z_][\w.]*/]);
+    rules.push(['number', /(?:0[xX][\da-fA-F]+|0[bB][01]+|\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][+-]?\d+)?)(?:[a-zA-Z%]+)?/]);
+    rules.push(['identifier', group === 'markup' ? /[A-Za-z_][\w:.-]*/ : ['powershell', 'shell', 'css', 'yaml'].includes(group) ? /[A-Za-z_][\w-]*/ : /[$A-Za-z_][\w$]*/]);
+    rules.push(['operator', /===|!==|=>|==|!=|<=|>=|&&|\|\||\?\?|\?\.|\+\+|--|\*\*|[=+*\/%<>!&|^~?:-]/]);
+    rules.push(['punctuation', /[{}\[\]();,.]/], ['other', /[\s\S]/]);
+    // sticky 匹配保证从当前位置向前读取；兜底字符保证每轮都推进，不扫描已输出的 HTML。
+    const scanner = new RegExp(rules.map(([kind, pattern]) => '(?<' + kind + '>' + pattern.source + ')').join('|'), 'gmy');
+    const output = [];
+    let match, previous = '', lineStart = true, insideTag = false, insideType = false;
+    while ((match = scanner.exec(code))) {
+      const text = match[0], offset = match.index;
+      let kind = rules.find(([name]) => match.groups[name] !== undefined)[0];
+      if (kind === 'space') {
+        output.push(escape(text));
+        if (text.includes('\n')) lineStart = true;
+        continue;
+      }
+      if (kind === 'identifier') {
+        const next = code.slice(offset + text.length), word = text.toLowerCase();
+        kind = null;
+        if (['json', 'yaml', 'css'].includes(group) && /^\s*:/.test(next)) kind = 'property';
+        else if (keywords[group]?.has(word)) kind = 'keyword';
+        else if (group === 'markup') kind = insideTag ? 'attribute' : null;
+        else if (['function', 'def', 'fun', 'fn', 'func'].includes(previous) || /^\s*\(/.test(next)) kind = 'function';
+        else if (['let', 'const', 'var', 'val'].includes(previous)) kind = 'variable';
+        else if (group === 'powershell' && (text.includes('-') || lineStart || previous === '|' || previous === '&')) kind = 'function';
+        else if (insideType) kind = 'type';
+        else if (previous === '.' || (['json', 'yaml', 'css'].includes(group) || previous === '{' || previous === ',') && /^\s*:/.test(next)) kind = 'property';
+        else if (/^[A-Z][\w$]*$/.test(text)) kind = 'type';
+      } else if (kind === 'string' && ['json', 'yaml'].includes(group) && /^\s*:/.test(code.slice(offset + text.length))) kind = 'property';
+      else if (kind === 'attribute' && group === 'powershell' && /^-(?:[ic]?(?:eq|ne|gt|ge|lt|le|match|notmatch|like|notlike|contains|notcontains|in|notin|replace|split)|and|or|not|xor|is|isnot|join|band|bor|bxor|bnot|shl|shr)$/i.test(text)) kind = 'operator';
+      else if (kind === 'variable' && group === 'powershell' && /^\$(?:true|false|null)$/i.test(text)) kind = 'keyword';
+      if (group === 'markup') {
+        if (kind === 'tag') insideTag = true;
+        else if (!insideTag && kind !== 'comment') kind = null;
+        if (text === '>') insideTag = false;
+      }
+      if (group === 'powershell' && text === '[') insideType = true;
+      if (group === 'powershell' && text === ']') insideType = false;
+      if (kind === 'other') kind = null;
+      if (kind === 'string' && ['powershell', 'shell'].includes(group) && (text.startsWith('"') || text.startsWith('@"'))) {
+        let stringHTML = '', consumed = 0;
+        for (const variable of text.matchAll(/(?<![`\\])\$(?:\{[^}\n]*\}|[A-Za-z_][\w]*(?::[A-Za-z_][\w]*)?|[0-9?@#$*!_-])/g)) {
+          stringHTML += escape(text.slice(consumed, variable.index)) + span('variable', variable[0]);
+          consumed = variable.index + variable[0].length;
+        }
+        output.push('<span class="syntax-string">' + stringHTML + escape(text.slice(consumed)) + '</span>');
+      } else output.push(span(kind, text));
+      if (kind !== 'comment') previous = text.toLowerCase();
+      lineStart = false;
+    }
+    return output.join('');
+  };
   const headings = [];
   const used = new Map(['toggle', 'restore', 'sidebar', 'toc', 'main', 'status', 'article', 'open-menu', 'open-file', 'file-input', 'open-folder', 'folder-input', 'folder-fallback', 'resume-folder', 'forget-folder', 'view-chapters', 'view-files', 'chapters-section', 'files-section', 'files-hint', 'folder-name', 'files', 'sidebar-resizer', 'toc-search', 'toc-search-status'].map(id => [id, true]));
   const heading = (level, text) => {
@@ -99,7 +196,7 @@ globalThis.renderMarkdown = function (source, baseURL) {
         i++;
         while (i < lines.length && !new RegExp(`^ {0,3}${fence[1][0]}{${fence[1].length},}\\s*$`).test(lines[i])) code.push(lines[i++]);
         i++;
-        html += `<pre><code data-language="${escape(fence[2].trim())}">${fence[2].trim() ? highlight(code.join('\n')) : escape(code.join('\n'))}</code></pre>`;
+        html += `<pre><code data-language="${escape(fence[2].trim())}">${highlight(code.join('\n'), fence[2])}</code></pre>`;
         continue;
       }
       const title = line.match(/^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$/);
