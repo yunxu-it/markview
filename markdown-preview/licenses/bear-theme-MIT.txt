@@ -1,4 +1,5 @@
 Bear Theme with Typora - adapted for MarkView
+MarkView display name: 绯红简约 (storage id: bear)
 Source: https://gist.github.com/Kenshin/e5adc79da3149315bdfd72a35b70d65e
 Source revision: 4f51ed827eb2ceb2eedce1a92111d61ca09f711a
 License source: https://github.com/Kenshin/mduikit/blob/master/LICENSE

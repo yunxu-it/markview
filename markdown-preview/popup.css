@@ -12,7 +12,8 @@ h1 { margin: 0 0 6px; font-size: 18px; }
   #theme-select::picker-icon { display: none; }
   #theme-select::picker(select) { padding: 6px; border: 1px solid var(--line); border-radius: 6px; color: var(--text); background: var(--bg); font: inherit; }
   #theme-select option { padding: 10px 12px; border-radius: 4px; }
-  #theme-select option:hover, #theme-select option:checked { color: var(--link); background: var(--selected); }
+  #theme-select option:hover { color: var(--link); background: var(--hover); }
+  #theme-select option:checked { color: var(--link); background: var(--selected); }
 }
 .settings-label, .width-limits, .settings-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 #article-width-value { color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -24,6 +25,6 @@ h1 { margin: 0 0 6px; font-size: 18px; }
 #export-pdf { width: 100%; margin-top: 16px; }
 #pdf-hint { margin: 8px 0 0; }
 button { padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; color: var(--text); background: var(--bg); font: inherit; cursor: pointer; }
-button:hover { background: var(--soft); }
+button:hover:not(:disabled) { background: var(--hover); }
 :disabled { opacity: .6; cursor: default; }
-:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }

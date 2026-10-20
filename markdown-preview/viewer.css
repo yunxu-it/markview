@@ -2,11 +2,11 @@
 html { scroll-padding-top: 16px; }
 body { margin: 0; color: var(--text); background: var(--bg); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; }
 button { font: inherit; cursor: pointer; border: 1px solid var(--line); border-radius: 6px; color: var(--text); background: var(--bg); padding: 5px 10px; }
-button:hover { background: var(--soft); }
-:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; }
+button:hover { background: var(--hover); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
 .skip-link { position: fixed; top: 8px; left: 8px; z-index: 8; padding: 8px 12px; color: var(--link); background: var(--bg); }
 .skip-link:not(:focus) { clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; padding: 0; }
-#sidebar { position: fixed; inset: 0 auto 0 0; width: var(--sidebar); padding: 22px 16px; overflow: auto; border-right: 1px solid var(--line); background: var(--bg); }
+#sidebar { position: fixed; inset: 0 auto 0 0; width: var(--sidebar); padding: 22px 16px; overflow: auto; border-right: 1px solid var(--line); background: var(--sidebar-bg); }
 .sidebar-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 .sidebar-heading button { border: 0; color: var(--muted); font-size: 12px; }
 .sidebar-actions { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 4px; }
@@ -30,12 +30,14 @@ button:hover { background: var(--soft); }
 #files ul { list-style: none; margin: 0; padding-left: 16px; }
 #files > ul { padding: 0; }
 #files li { margin: 4px 0; }
-#files summary { min-height: 28px; padding: 4px 6px; cursor: pointer; overflow-wrap: anywhere; }
+#files summary { min-height: 28px; padding: 4px 6px; border-radius: 5px; cursor: pointer; overflow-wrap: anywhere; }
+#files summary:hover { background: var(--hover); }
 #toc summary, #files summary { display: flex; align-items: center; gap: 7px; list-style: none; }
 #open-menu > summary::-webkit-details-marker, #toc summary::-webkit-details-marker, #files summary::-webkit-details-marker { display: none; }
 #toc summary::before, #files summary::before { content: ''; flex: 0 0 7px; width: 7px; height: 7px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); }
 #toc details[open] > summary::before, #files details[open] > summary::before { transform: rotate(45deg); }
-#files button { width: 100%; padding: 5px 6px; border: 0; text-align: left; overflow-wrap: anywhere; color: var(--muted); }
+#files button { width: 100%; padding: 5px 6px; border: 0; text-align: left; overflow-wrap: anywhere; color: var(--muted); background: transparent; }
+#files button:not([aria-current]):hover { background: var(--hover); }
 #files button[aria-current] { background: var(--selected); color: var(--link); font-weight: 600; }
 #sidebar-resizer { position: fixed; top: 0; bottom: 0; left: calc(var(--sidebar) - 4px); width: 8px; z-index: 7; cursor: col-resize; touch-action: none; }
 #sidebar-resizer::after { content: ''; position: absolute; top: 0; bottom: 0; left: 3px; width: 2px; background: transparent; }
@@ -51,7 +53,8 @@ button:hover { background: var(--soft); }
 #toc > ul { padding: 0; }
 #toc li { margin: 4px 0; }
 #toc a { display: inline-block; padding: 5px 6px; border-radius: 5px; color: var(--muted); text-decoration: none; overflow-wrap: anywhere; max-width: 100%; }
-#toc a:hover, #toc a[aria-current] { background: var(--selected); color: var(--link); }
+#toc a:hover { background: var(--hover); color: var(--link); }
+#toc a[aria-current] { background: var(--selected); color: var(--link); font-weight: 600; }
 #toc summary { cursor: pointer; }
 #toc summary a { flex: 1; min-width: 0; max-width: none; }
 #main { margin: 0 0 0 var(--sidebar); padding: 24px 24px 80px; }
@@ -70,20 +73,24 @@ button:hover { background: var(--soft); }
 .markdown-body h4 { font-size: 1em; }
 .markdown-body h5 { font-size: .875em; }
 .markdown-body h6 { font-size: .85em; color: var(--muted); }
-:root[data-theme="report"] .markdown-body h1 { text-align: center; border-bottom: 0; }
-:root[data-theme="report"] .markdown-body h2 { font-size: 1.4em; }
 .markdown-body p, .markdown-body blockquote, .markdown-body ul, .markdown-body ol, .markdown-body pre, .table-scroll { margin: 0 0 16px; }
 .markdown-body a { color: var(--link); text-decoration: none; }
 .markdown-body a:hover { text-decoration: underline; }
 .markdown-body img { max-width: 100%; height: auto; }
-.markdown-body code { font: 85%/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; background: var(--code-bg); border-radius: 6px; padding: .2em .4em; }
-.markdown-body pre { padding: 16px; overflow: auto; background: var(--soft); border-radius: 6px; }
-.markdown-body pre code { padding: 0; background: none; white-space: pre; }
+.markdown-body code { font: 85%/1.5 var(--code-font); color: var(--code-text); background: var(--code-bg); border-radius: 6px; padding: .2em .4em; }
+.markdown-body pre { padding: var(--code-padding); overflow: auto; border: 1px solid var(--code-border); border-radius: var(--code-radius); color: var(--code-text); background: var(--code-surface); font: .875rem/1.6 var(--code-font); tab-size: 4; }
+.markdown-body pre code { display: block; padding: 0; color: inherit; background: none; font: inherit; white-space: pre; }
 .code-block { position: relative; margin: 0 0 16px; }
-.markdown-body .code-block pre { margin: 0; padding-top: 44px; }
-.copy-code { position: absolute; top: 8px; right: 8px; padding: 3px 8px; font-size: 12px; color: var(--muted); opacity: 0; }
+.markdown-body .code-block pre { margin: 0; }
+.copy-code { padding: 3px 8px; font-size: 12px; color: var(--muted); opacity: 0; }
 .code-block:hover .copy-code, .code-block:focus-within .copy-code, .copy-code[data-feedback] { opacity: 1; }
 .copy-code:disabled { cursor: wait; }
+/* 复制按钮独立占列，避免遮住长行；屏幕网格不参与打印，PDF 使用整行代码宽度。 */
+@media screen {
+  .code-block { display: grid; grid-template-columns: minmax(0, 1fr) 84px; overflow: hidden; border: 1px solid var(--code-border); border-radius: var(--code-radius); background: var(--code-surface); }
+  .markdown-body .code-block pre { min-width: 0; border: 0; border-radius: 0; }
+  .copy-code { align-self: start; justify-self: end; margin: 8px; }
+}
 @media (hover: none) { .copy-code { opacity: 1; } }
 .markdown-body blockquote { padding: 0 1em; color: var(--muted); border-left: .25em solid var(--line); }
 .markdown-body ul, .markdown-body ol { padding-left: 2em; }
@@ -108,7 +115,6 @@ button:hover { background: var(--soft); }
   .markdown-body p, .markdown-body li { orphans: 3; widows: 3; }
   .markdown-body pre { overflow: visible; }
   .markdown-body pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
-  .markdown-body .code-block pre { padding-top: 16px; }
   .table-scroll { overflow: visible; }
   .markdown-body table { table-layout: fixed; }
   .markdown-body th, .markdown-body td { overflow-wrap: anywhere; }
@@ -121,10 +127,36 @@ button:hover { background: var(--soft); }
 .syntax-function { color: var(--function, var(--keyword)); } .syntax-variable { color: var(--variable, var(--text)); } .syntax-type { color: var(--type, var(--keyword)); }
 .syntax-tag { color: var(--tag, var(--keyword)); } .syntax-selector { color: var(--selector, var(--string)); } .syntax-punctuation { color: var(--punctuation, var(--muted)); }
 
-/* 将 Bear 的正文样式限定在当前主题内，保留共用的宽度设置与打印分页规则。 */
-:root[data-theme="bear"] #sidebar { background: var(--soft); }
-:root[data-theme="bear"] #files button:not([aria-current]) { background: transparent; }
-:root[data-theme="bear"] #files button:not([aria-current]):hover { background: var(--hover); }
+/* 暖纸阅读使用温和的引用与横向表格分隔，正文行距由主题变量控制。 */
+:root[data-theme="warm"] .markdown-body :is(h1, h2) { line-height: 1.35; }
+:root[data-theme="warm"] .markdown-body p { margin-bottom: 1em; }
+:root[data-theme="warm"] .markdown-body blockquote { padding: .6em 1em; border-left: 3px solid var(--line); border-radius: 0 4px 4px 0; background: var(--soft); }
+:root[data-theme="warm"] .markdown-body th, :root[data-theme="warm"] .markdown-body td { padding: .6em .8em; border: 0; border-bottom: 1px solid var(--line); }
+:root[data-theme="warm"] .markdown-body thead { background: var(--soft); }
+:root[data-theme="warm"] .markdown-body tr:nth-child(even) { background: transparent; }
+
+/* 柔和深色以蓝色选中底和侧边标记区分悬停，焦点轮廓独立于选中状态。 */
+:root[data-theme="dark"] #files button[aria-current], :root[data-theme="dark"] #toc a[aria-current] { box-shadow: inset 2px 0 var(--link); }
+:root[data-theme="dark"] .sidebar-views button[aria-pressed="true"] { color: var(--link); background: var(--selected); box-shadow: none; }
+
+/* 仅文档开头的主标题居中，其余一级标题保持章节排版。 */
+:root[data-theme="report"] .markdown-body h1 { margin: 1.6em 0 .7em; padding: 0; border: 0; font-size: 1.8em; line-height: 1.4; text-align: left; }
+:root[data-theme="report"] .markdown-body > h1:first-child { margin-top: 0; margin-bottom: 1.1em; text-align: center; }
+:root[data-theme="report"] .markdown-body h2 { margin: 1.6em 0 .7em; font-size: 1.4em; }
+:root[data-theme="report"] .markdown-body > :first-child { margin-top: 0; }
+:root[data-theme="report"] .markdown-body blockquote { padding: .6em 1em; border-left: 3px solid var(--line); background: var(--soft); }
+:root[data-theme="report"] .markdown-body th, :root[data-theme="report"] .markdown-body td { padding: .6em .8em; line-height: 1.6; }
+:root[data-theme="report"] .markdown-body thead { background: var(--soft); }
+:root[data-theme="report"] .markdown-body th { border-bottom-width: 2px; }
+:root[data-theme="report"] .markdown-body a { text-decoration: underline; text-underline-offset: .15em; }
+:root[data-theme="report"] .syntax-keyword, :root[data-theme="report"] .syntax-type { font-weight: 600; }
+:root[data-theme="report"] .syntax-comment { font-style: italic; }
+:root:is([data-theme="warm"], [data-theme="report"]) .markdown-body blockquote > :last-child { margin-bottom: 0; }
+@media print {
+  :root[data-theme="report"] .markdown-body { font-size: 11pt; line-height: 1.6; }
+}
+
+/* 绯红简约保留原 Bear 适配的正文排版，代码框与其他主题共用布局。 */
 :root[data-theme="bear"] .markdown-body :is(h1, h2, h3, h4, h5, h6) { margin: 1em 0 .37em; padding: 0; border: 0; color: #262626; font-weight: 500; line-height: 1.4; }
 :root[data-theme="bear"] .markdown-body h1 { font-size: 1.625em; }
 :root[data-theme="bear"] .markdown-body h2 { font-size: 1.375em; }
@@ -137,17 +169,7 @@ button:hover { background: var(--soft); }
 :root[data-theme="bear"] .markdown-body ul, :root[data-theme="bear"] .markdown-body ol { padding-left: 1.45em; }
 :root[data-theme="bear"] .markdown-body li::marker { color: var(--bear-accent); }
 :root[data-theme="bear"] .markdown-body blockquote { padding: 0 1em; border-left: 2px solid var(--bear-accent); }
-:root[data-theme="bear"] .markdown-body code { font-family: var(--code-font); }
 :root[data-theme="bear"] .markdown-body :not(pre) > code { margin: 0 2px; padding: 0 2px; border: 1px solid var(--code-border); border-radius: 4px; color: var(--code-text); line-height: 1.6; }
-:root[data-theme="bear"] .markdown-body pre { border: 1px solid var(--code-border); border-radius: 3px; color: var(--code-text); background: var(--code-bg); font: .875rem/1.6 var(--code-font); tab-size: 4; }
-:root[data-theme="bear"] .markdown-body .code-block pre { padding: 10px; }
-:root[data-theme="bear"] .markdown-body pre code { display: block; font: inherit; color: inherit; }
-/* 复制按钮单独占列，不遮住可横向滚动的代码；打印时恢复普通块布局与代码边框。 */
-@media screen {
-  :root[data-theme="bear"] .code-block { display: grid; grid-template-columns: minmax(0, 1fr) 84px; overflow: hidden; border: 1px solid var(--code-border); border-radius: 3px; background: var(--code-bg); }
-  :root[data-theme="bear"] .markdown-body .code-block pre { min-width: 0; border: 0; border-radius: 0; }
-  :root[data-theme="bear"] .copy-code { position: static; align-self: start; justify-self: end; margin: 8px; }
-}
 :root[data-theme="bear"] .markdown-body th, :root[data-theme="bear"] .markdown-body td { padding: .65em .85em; border: 0; border-bottom: 1px solid var(--line); }
 :root[data-theme="bear"] .markdown-body thead { background: var(--soft); }
 :root[data-theme="bear"] .markdown-body tr:nth-child(even) { background: transparent; }
