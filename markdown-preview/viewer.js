@@ -1,4 +1,5 @@
 (() => {
+  const i18n = globalThis.MarkViewI18n, t = i18n.t;
   const local = location.protocol === 'file:';
   const original = local ? (document.querySelector('body > pre')?.textContent ?? document.body.textContent) : '';
   let initialResult;
@@ -7,47 +8,48 @@
     catch {
       const status = document.createElement('p');
       status.setAttribute('role', 'alert');
-      status.textContent = 'Markdown 渲染失败，已保留原文。';
+      i18n.set(status, 'renderOriginalFailed');
       document.body.prepend(status);
       return;
     }
   }
-  document.documentElement.lang = 'zh-CN';
   document.body.replaceChildren();
   document.body.innerHTML = `
-    <a class="skip-link" href="#main">跳到正文</a>
-    <button id="restore" aria-label="展开目录" aria-controls="sidebar" aria-expanded="false" title="展开目录">›</button>
-    <aside id="sidebar" aria-label="文件与标题目录">
+    <a class="skip-link" href="#main" data-i18n="skipContent">跳到正文</a>
+    <button id="restore" data-i18n-aria-label="expandOutline" data-i18n-title="expandOutline" aria-label="展开目录" aria-controls="sidebar" aria-expanded="false" title="展开目录">›</button>
+    <aside id="sidebar" data-i18n-aria-label="sidebarLabel" aria-label="文件与标题目录">
       <div class="sidebar-heading"><div class="sidebar-actions">
-        <details id="open-menu"><summary title="打开文件或文件夹"><svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8V5.5A1.5 1.5 0 0 1 4.5 4H9l2 3h8.5A1.5 1.5 0 0 1 21 8.5V10M3 8h6l2 3h11l-3 9H3z"/></svg><span class="control-label">打开</span><svg class="open-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="open-options">
-          <button id="open-file" type="button">打开文件</button>
-          <button id="open-folder" type="button">打开文件夹</button>
-          <button id="forget-folder" type="button" hidden>忘记文件夹</button>
+        <details id="open-menu"><summary data-i18n-title="openTooltip" title="打开文件或文件夹"><svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8V5.5A1.5 1.5 0 0 1 4.5 4H9l2 3h8.5A1.5 1.5 0 0 1 21 8.5V10M3 8h6l2 3h11l-3 9H3z"/></svg><span class="control-label" data-i18n="open">打开</span><svg class="open-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="open-options">
+          <button id="open-file" type="button" data-i18n="openFile">打开文件</button>
+          <button id="open-folder" type="button" data-i18n="openFolder">打开文件夹</button>
+          <button id="forget-folder" type="button" data-i18n="forgetFolder" hidden>忘记文件夹</button>
         </div></details>
-        <button id="toggle" aria-controls="sidebar" aria-expanded="true">收起目录</button>
+        <button id="toggle" data-i18n="collapseOutline" aria-controls="sidebar" aria-expanded="true">收起目录</button>
       </div></div>
       <input id="file-input" type="file" accept=".md,.markdown,.mdown" hidden>
-      <div class="sidebar-views" role="group" aria-label="目录视图">
-        <button id="view-chapters" type="button" aria-pressed="true" aria-controls="chapters-section"><svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span class="control-label">章节</span></button>
-        <button id="view-files" type="button" aria-pressed="false" aria-controls="files-section"><svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v14M4 7h5M4 17h5"/><rect x="9" y="4" width="11" height="6" rx="1.5"/><rect x="9" y="14" width="11" height="6" rx="1.5"/></svg><span class="control-label">文件</span></button>
+      <div class="sidebar-views" role="group" data-i18n-aria-label="navViews" aria-label="目录视图">
+        <button id="view-chapters" type="button" aria-pressed="true" aria-controls="chapters-section"><svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span class="control-label" data-i18n="chapters">章节</span></button>
+        <button id="view-files" type="button" aria-pressed="false" aria-controls="files-section"><svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v14M4 7h5M4 17h5"/><rect x="9" y="4" width="11" height="6" rx="1.5"/><rect x="9" y="14" width="11" height="6" rx="1.5"/></svg><span class="control-label" data-i18n="files">文件</span></button>
       </div>
       <div id="files-section" hidden>
-        <button id="resume-folder" type="button" hidden>继续读取文件夹</button>
-        <button id="folder-fallback" type="button" hidden>兼容方式选择文件夹</button>
+        <button id="resume-folder" type="button" data-i18n="resumeFolder" hidden>继续读取文件夹</button>
+        <button id="folder-fallback" type="button" data-i18n="folderFallback" hidden>兼容方式选择文件夹</button>
         <input id="folder-input" type="file" webkitdirectory hidden>
-        <p id="files-hint">通过“打开”选择文件夹，即可浏览 Markdown 文件树。</p>
+        <p id="files-hint" data-i18n="folderHint">通过“打开”选择文件夹，即可浏览 Markdown 文件树。</p>
         <p id="folder-name"></p>
-        <nav id="files" aria-label="Markdown 文件"></nav>
+        <nav id="files" data-i18n-aria-label="filesLabel" aria-label="Markdown 文件"></nav>
       </div>
       <div id="chapters-section">
-        <input id="toc-search" type="search" placeholder="搜索目录" aria-label="搜索目录标题" aria-controls="toc" autocomplete="off">
+        <input id="toc-search" type="search" data-i18n-placeholder="searchPlaceholder" data-i18n-aria-label="searchLabel" placeholder="搜索目录" aria-label="搜索目录标题" aria-controls="toc" autocomplete="off">
         <p id="toc-search-status" role="status"></p>
-        <nav id="toc" aria-label="文档章节"></nav>
+        <nav id="toc" data-i18n-aria-label="tocLabel" aria-label="文档章节"></nav>
       </div>
     </aside>
-    <div id="sidebar-resizer" role="separator" tabindex="0" aria-label="调整目录宽度" aria-orientation="vertical" aria-controls="sidebar" title="拖动调整目录宽度，双击恢复默认；方向键微调，Enter 恢复默认"></div>
+    <div id="sidebar-resizer" role="separator" tabindex="0" data-i18n-aria-label="resizerLabel" data-i18n-title="resizerTitle" aria-label="调整目录宽度" aria-orientation="vertical" aria-controls="sidebar" title="拖动调整目录宽度，双击恢复默认；方向键微调，Enter 恢复默认"></div>
     <main id="main" tabindex="-1"><div id="status" role="status"></div><article class="markdown-body" id="article"></article></main>`;
   const $ = id => document.getElementById(id);
+  const message = (id, key, values) => i18n.set($(id), key, values);
+  i18n.translate();
   let updateActiveHeading = () => {}, revealActiveHeading = () => {}, headingFrame = 0;
   const copyTimers = new Set();
   const scheduleHeadingUpdate = () => {
@@ -258,7 +260,7 @@
       const [handle] = await window.showOpenFilePicker({ types: [{ description: 'Markdown', accept: { 'text/markdown': ['.md', '.markdown', '.mdown'] } }] });
       readFile({ name: handle.name, handle });
     } catch (error) {
-      if (error.name !== 'AbortError') $('status').textContent = '文件选择不可用，请拖入 Markdown 文件阅读。';
+      if (error.name !== 'AbortError') message('status', 'filePickerFailed');
     }
   });
   $('file-input').addEventListener('change', event => {
@@ -267,6 +269,7 @@
     readFile(file);
   });
   let activeFile = null, currentDocument = null, directoryHandle = null, rememberedFolder = null, folderGeneration = 0;
+  let documentName = '';
   let fileEntries = [], fileButtons = new Map(), sidebarView = 'chapters';
   let folderWriteQueue = Promise.resolve();
   // 仅保存目录句柄，不保存正文或文件列表；事务完成后关闭连接，写入按用户操作顺序执行。
@@ -362,7 +365,7 @@
     appendFiles(root, fragment);
     if (request !== folderGeneration) return;
     if (!entries.length) {
-      $('files-hint').textContent = '所选文件夹中没有 Markdown 文件（.md / .markdown / .mdown）。';
+      message('files-hint', 'folderEmptyTypes');
       return false;
     }
     directoryHandle = handle;
@@ -370,8 +373,8 @@
     fileButtons = buttons;
     markActiveFile(null);
     $('files').replaceChildren(fragment);
-    $('folder-name').textContent = root.name + ' · ' + entries.length + ' 个文档';
-    $('files-hint').textContent = '点击文件切换文档。';
+    message('folder-name', entries.length === 1 ? 'folderCountOne' : 'folderCountMany', { name: root.name, count: entries.length });
+    message('files-hint', 'folderSwitch');
     const current = currentDocument;
     try {
       const entry = await findCurrentEntry(entries, handle, current);
@@ -380,7 +383,7 @@
     return true;
   };
   const loadDirectory = async (handle, request) => {
-    $('files-hint').textContent = '正在读取文件目录…';
+    message('files-hint', 'folderLoading');
     const scan = async (directory, path) => {
       const node = folderNode(directory.name);
       for await (const entry of directory.values()) {
@@ -405,13 +408,14 @@
       if (request !== folderGeneration) return;
       if (permission === 'granted') await loadDirectory(handle, request);
       else {
+        message('folder-name', null);
         $('folder-name').textContent = handle.name;
-        $('files-hint').textContent = '已记住文件夹，点击“继续读取”恢复访问。';
+        message('files-hint', 'folderRemembered');
         $('resume-folder').hidden = false;
       }
     } catch {
       if (request === folderGeneration && rememberedFolder) {
-        $('files-hint').textContent = '文件夹暂时不可读，可继续读取或通过“打开”重新选择。';
+        message('files-hint', 'folderUnavailable');
         $('resume-folder').hidden = false;
       }
     }
@@ -423,10 +427,10 @@
       // 权限申请直接来自点击；自动恢复只查询权限，不弹授权框。
       const permission = await rememberedFolder.requestPermission({ mode: 'read' });
       if (request !== folderGeneration) return;
-      if (permission !== 'granted') { $('files-hint').textContent = '尚未获得读取权限，可再次继续读取。'; return; }
+      if (permission !== 'granted') { message('files-hint', 'folderPermission'); return; }
       generation++;
       if (await loadDirectory(rememberedFolder, request) && request === folderGeneration) $('resume-folder').hidden = true;
-    } catch { if (request === folderGeneration) $('files-hint').textContent = '文件夹读取失败，请通过“打开”重新选择。'; }
+    } catch { if (request === folderGeneration) message('files-hint', 'folderReadFailed'); }
   });
   $('forget-folder').addEventListener('click', async () => {
     closeOpenMenu();
@@ -437,18 +441,18 @@
     fileButtons.clear();
     markActiveFile(null);
     $('files').replaceChildren();
-    $('folder-name').textContent = '';
+    message('folder-name', null);
     $('resume-folder').hidden = $('forget-folder').hidden = true;
-    $('files-hint').textContent = '通过“打开”选择文件夹，即可浏览 Markdown 文件树。';
+    message('files-hint', 'folderHint');
     try { await saveFolder(null); }
-    catch { if (request === folderGeneration) { $('files-hint').textContent = '文件夹记忆清除失败，请重试“忘记文件夹”。'; $('forget-folder').hidden = false; } }
+    catch { if (request === folderGeneration) { message('files-hint', 'folderForgetFailed'); $('forget-folder').hidden = false; } }
   });
   // 仅枚举已授权目录，正文按需读取；不请求写权限，不自动使用“上传”方式回退。
   $('open-folder').addEventListener('click', async () => {
     closeOpenMenu();
     setView('files');
     if (typeof window.showDirectoryPicker !== 'function') {
-      $('files-hint').textContent = '当前浏览器不支持只读目录选择。可使用兼容方式，Chrome 会显示“上传”确认，但文件仅在本地处理。';
+      message('files-hint', 'folderUnsupported');
       $('folder-fallback').hidden = false;
       return;
     }
@@ -465,25 +469,23 @@
       $('resume-folder').hidden = true;
       $('forget-folder').hidden = false;
       try { await saveFolder(handle); }
-      catch { if (request === folderGeneration) $('files-hint').textContent = '本次可正常阅读，但浏览器未能保存文件夹记忆。'; }
+      catch { if (request === folderGeneration) message('files-hint', 'folderSaveFailed'); }
     } catch (error) {
       if (request !== folderGeneration) return;
       if (error.name === 'AbortError') return;
-      $('files-hint').textContent = error.name === 'SecurityError'
-        ? '当前页面不允许只读目录访问，请点击扩展图标，选择“打开预览页”后再试。也可使用下方兼容方式。'
-        : '目录读取失败，请重新选择文件夹。原文档和文件树已保留。';
+      message('files-hint', error.name === 'SecurityError' ? 'folderSecurity' : 'folderLoadFailed');
       $('folder-fallback').hidden = false;
     }
   });
   $('folder-fallback').addEventListener('click', () => {
-    if (!('webkitdirectory' in $('folder-input'))) { $('files-hint').textContent = '当前浏览器不支持文件夹选择。'; return; }
-    $('files-hint').textContent = '兼容方式会显示 Chrome 的“上传”确认；文件只交给当前页面处理，不发送到服务器。';
+    if (!('webkitdirectory' in $('folder-input'))) { message('files-hint', 'folderFallbackUnsupported'); return; }
+    message('files-hint', 'folderFallbackNotice');
     $('folder-input').click();
   });
   $('folder-input').addEventListener('change', event => {
     const markdown = Array.from(event.target.files).filter(isMarkdown);
     event.target.value = '';
-    if (!markdown.length) { $('files-hint').textContent = '所选文件夹中没有 Markdown 文件。'; return; }
+    if (!markdown.length) { message('files-hint', 'folderEmpty'); return; }
     const request = ++folderGeneration, root = folderNode(markdown[0].webkitRelativePath.split('/')[0]);
     generation++;
     for (const file of markdown) {
@@ -525,8 +527,8 @@
       block.className = 'code-block';
       button.className = 'copy-code';
       button.type = 'button';
-      button.textContent = '复制';
-      button.setAttribute('aria-label', '复制代码');
+      i18n.set(button, 'copy');
+      i18n.set(button, 'copyLabel', {}, 'aria-label');
       button.setAttribute('aria-live', 'polite');
       pre.before(block);
       block.append(pre, button);
@@ -535,23 +537,24 @@
         clearTimeout(resetTimer);
         copyTimers.delete(resetTimer);
         button.disabled = true;
-        button.textContent = '复制中…';
+        i18n.set(button, 'copyPending');
+        i18n.set(button, 'copyPending', {}, 'aria-label');
         button.dataset.feedback = 'pending';
         try {
           // 只复制代码文本，避免把高亮标签和按钮文案带入剪贴板。
           await navigator.clipboard.writeText(code.textContent);
-          button.textContent = '已复制';
-          button.setAttribute('aria-label', '代码已复制');
+          i18n.set(button, 'copyDone');
+          i18n.set(button, 'copyDoneLabel', {}, 'aria-label');
         } catch {
-          button.textContent = '复制失败';
-          button.setAttribute('aria-label', '复制失败，请重试或手动选择代码复制');
+          i18n.set(button, 'copyFailed');
+          i18n.set(button, 'copyFailedLabel', {}, 'aria-label');
         } finally {
           button.disabled = false;
           if (!button.isConnected) return;
           button.dataset.feedback = 'done';
           resetTimer = setTimeout(() => {
-            button.textContent = '复制';
-            button.setAttribute('aria-label', '复制代码');
+            i18n.set(button, 'copy');
+            i18n.set(button, 'copyLabel', {}, 'aria-label');
             delete button.dataset.feedback;
             copyTimers.delete(resetTimer);
           }, 2000);
@@ -559,11 +562,12 @@
         }
       });
     });
-    document.title = name + ' · 墨览 · MarkView';
-    $('toc').replaceChildren();
+    documentName = name;
+    document.title = name + ' · ' + t('brand');
+    message('toc', null);
     $('toc-search').value = '';
     $('toc-search').disabled = !result.headings.length;
-    $('toc-search-status').textContent = '';
+    message('toc-search-status', null);
     const tree = { children: [], level: 0 }, stack = [tree];
     for (const heading of result.headings) {
       while (stack.length > 1 && stack.at(-1).level >= heading.level) stack.pop();
@@ -589,7 +593,7 @@
       }
     };
     append(tree.children, $('toc'));
-    if (!result.headings.length) $('toc').textContent = '暂无标题';
+    if (!result.headings.length) message('toc', 'noHeadings');
     const records = [...$('toc').querySelectorAll('li')].map(item => ({
       item, link: item.querySelector('a'), details: item.firstElementChild.tagName === 'DETAILS' ? item.firstElementChild : null
     }));
@@ -612,7 +616,7 @@
         foldedBeforeSearch.forEach((open, details) => { details.open = open; });
         foldedBeforeSearch = null;
       }
-      $('toc-search-status').textContent = query ? (matches ? `找到 ${matches} 个标题` : '没有匹配的标题') : '';
+      message('toc-search-status', query ? (matches ? (matches === 1 ? 'tocMatchOne' : 'tocMatchMany') : 'tocNoMatch') : null, { count: matches });
     };
     const links = new Map([...$('toc').querySelectorAll('a')].map(link => [link.dataset.heading, link]));
     const headings = result.headings.map(heading => document.getElementById(heading.id)).filter(Boolean);
@@ -658,20 +662,20 @@
   async function readFile(input, button = null) {
     if (!input) return;
     const request = ++generation;
-    if (!isMarkdown(input)) { $('status').textContent = '请选择 Markdown 文件（.md / .markdown / .mdown）。'; return; }
+    if (!isMarkdown(input)) { message('status', 'invalidMarkdown'); return; }
     try {
       const file = input.handle ? await input.handle.getFile() : input.file ?? input;
       const text = await file.text();
       if (request !== generation) return;
       let result;
       try { result = renderMarkdown(text, chrome.runtime.getURL('')); }
-      catch { $('status').textContent = 'Markdown 渲染失败，已保留当前文档。'; return; }
+      catch { message('status', 'renderCurrentFailed'); return; }
       history.replaceState(null, '', location.href.split('#')[0]);
       const path = input.path ?? file.name;
       show(text, path, chrome.runtime.getURL(''), result, (button ? 'folder-content:' : 'file-content:') + path + '\u0000' + text);
       currentDocument = { name: file.name, source: text, handle: input.handle ?? null };
       markActiveFile(button);
-      $('status').textContent = '已打开：' + path + '。相对路径图片请通过 Chrome 直接打开原始 .md 文件查看。';
+      message('status', 'fileOpened', { path });
       if (button && innerWidth < 760) setSidebar(true);
       if (!button && fileEntries.length) {
         const current = currentDocument, folderRequest = folderGeneration;
@@ -680,18 +684,25 @@
           if (request === generation && folderRequest === folderGeneration && current === currentDocument && entry) markActiveFile(fileButtons.get(entry.path));
         } catch { /* 关联失败时保留已打开的文档。 */ }
       }
-    } catch { if (request === generation) $('status').textContent = '文件读取失败，请重新选择文件。'; }
+    } catch { if (request === generation) message('status', 'fileReadFailed'); }
   }
   document.addEventListener('dragover', event => { event.preventDefault(); });
   document.addEventListener('drop', event => { event.preventDefault(); readFile(event.dataTransfer.files[0]); });
+  const showWelcome = () => show(t('welcomeContent'), t('welcomeName'), location.href);
   if (local) {
     let name = location.pathname.split('/').pop();
     try { name = decodeURIComponent(name); } catch {}
     show(original, name, location.href, initialResult, 'file-url:' + location.href.split('#')[0]);
     currentDocument = { name, source: original, handle: null, url: location.href };
   } else {
-    show('# 墨览 · MarkView\n\n点击侧栏的 **打开**，选择 **打开文件** 或 **打开文件夹**。也可拖入 Markdown，或在 Chrome 中直接打开本地 `.md` 文件。\n\n## 本地文件自动预览\n\n在 Chrome 扩展详情中开启 **允许访问文件网址**，然后在 Chrome 中打开 `.md` 文件。\n\n## 阅读操作\n\n- 点击 **章节** 查看当前文档标题并跳转章节\n- 打开文件夹后，点击 **文件** 浏览 Markdown 文件树并切换文档\n- 文件夹自动记住，刷新后尝试恢复；权限失效时点击 **继续读取文件夹**\n- 通过 **打开 → 忘记文件夹** 清除目录记忆\n- 只读模式每次点击文档会读取最新内容\n\n## 支持内容\n\n表格、代码块、任务列表、引用、图片和链接。原始 HTML 按文本显示。', '欢迎使用', location.href);
+    showWelcome();
   }
+  window.addEventListener('markview:languagechange', () => {
+    // 用户正文与目录节点保持原样，只刷新界面；欢迎页属于扩展内置内容。
+    if (!local && !currentDocument) showWelcome();
+    else document.title = documentName + ' · ' + t('brand');
+    scheduleHeadingUpdate();
+  });
   restoreFolder();
   const registerPdfMessages = async () => {
     let ownerTabId = null, printPending = false;
@@ -719,11 +730,11 @@
       setTimeout(() => {
         try {
           if (version !== documentVersion || !currentDocument) {
-            $('status').textContent = '当前文档已变化，请重新点击扩展图标导出 PDF。';
+            message('status', 'documentChangedPrint');
             return;
           }
           window.print();
-        } catch { $('status').textContent = '无法打开打印预览，请使用 Ctrl+P 后选择另存为 PDF。'; }
+        } catch { message('status', 'printFailed'); }
         finally { printPending = false; }
       }, 100);
       return false;

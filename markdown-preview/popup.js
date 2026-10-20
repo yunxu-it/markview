@@ -1,15 +1,19 @@
 (() => {
   const $ = id => document.getElementById(id);
   const preferences = globalThis.MarkViewSettings;
+  const i18n = globalThis.MarkViewI18n;
+  const message = (id, key, values) => i18n.set($(id), key, values);
+  const changedKeys = new Set();
   let settings = { ...preferences.defaults }, saveRevision = 0;
   let pdfTarget = null;
   const render = () => {
     settings = preferences.apply(settings);
+    $('language-select').value = settings.language;
     $('theme-select').value = settings.theme;
     $('article-width').value = String(settings.articleMaxWidth || preferences.widthRange.full);
-    const label = settings.articleMaxWidth === 0 ? '铺满' : settings.articleMaxWidth + 'px';
-    $('article-width-value').value = label;
-    $('article-width').setAttribute('aria-valuetext', label);
+    const key = settings.articleMaxWidth === 0 ? 'fullWidth' : 'widthPixels', values = { width: settings.articleMaxWidth };
+    message('article-width-value', key, values);
+    i18n.set($('article-width'), key, values, 'aria-valuetext');
   };
   const save = async changes => {
     const revision = ++saveRevision;
@@ -19,12 +23,13 @@
     try {
       // 每次拖动都立即发起保存，关闭弹出页也无需等待延迟定时器。
       await chrome.storage.local.set(values);
-      if (revision === saveRevision) $('settings-status').textContent = '';
+      if (revision === saveRevision) message('settings-status', null);
     } catch {
-      if (revision === saveRevision) $('settings-status').textContent = '设置保存失败，请重新调整后重试。';
+      if (revision === saveRevision) message('settings-status', 'settingsSaveFailed');
     }
   };
   $('theme-select').addEventListener('change', () => save({ theme: $('theme-select').value }));
+  $('language-select').addEventListener('change', () => save({ language: $('language-select').value }));
   $('article-width').addEventListener('input', () => {
     const value = Number($('article-width').value);
     save({ articleMaxWidth: value === preferences.widthRange.full ? 0 : value });
@@ -34,7 +39,7 @@
     try {
       await chrome.tabs.create({ url: chrome.runtime.getURL('viewer.html') });
       window.close();
-    } catch { $('settings-status').textContent = '无法打开预览页，请重新点击后再试。'; }
+    } catch { message('settings-status', 'openViewerFailed'); }
   });
   const sendPdfMessage = (target, message) => target.route === 'tab'
     ? chrome.tabs.sendMessage(target.tabId, message, { frameId: 0 })
@@ -52,11 +57,11 @@
         if (!response?.canExport || !Number.isInteger(response.documentVersion)) continue;
         pdfTarget = { ...target, documentVersion: response.documentVersion };
         $('export-pdf').disabled = false;
-        $('pdf-hint').textContent = '导出当前标签页正在查看的 Markdown 文档。';
+        message('pdf-hint', 'pdfReady');
         return;
       }
     } catch { /* 普通网页或未就绪的预览页保持禁用。 */ }
-    $('pdf-hint').textContent = '请先在当前标签页打开 Markdown 文档。';
+    message('pdf-hint', 'pdfOpenDocument');
   };
   $('export-pdf').addEventListener('click', async () => {
     if (!pdfTarget) return;
@@ -65,14 +70,31 @@
       const response = await sendPdfMessage(pdfTarget, { type: 'markview:pdf:export', documentVersion: pdfTarget.documentVersion });
       if (!response?.ok) throw new Error('当前文档不可导出');
       window.close();
-    } catch { $('pdf-hint').textContent = '当前文档已变化或无法连接，请刷新文档页并重新打开弹窗后重试。'; }
+    } catch { message('pdf-hint', 'pdfReconnect'); }
+  });
+  // 与预览页一样先订阅再读取，保留读取期间其他页面同步的新设置。
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== 'local') return;
+    const updated = {};
+    for (const key of preferences.keys) {
+      if (!Object.hasOwn(changes, key)) continue;
+      changedKeys.add(key);
+      updated[key] = changes[key].newValue;
+    }
+    if (!Object.keys(updated).length) return;
+    settings = preferences.normalize({ ...settings, ...updated });
+    render();
   });
   const restore = async () => {
-    try { settings = preferences.normalize(await chrome.storage.local.get(preferences.keys)); }
-    catch { $('settings-status').textContent = '设置读取失败，暂时使用默认值，可重新调整保存。'; }
+    try {
+      const saved = await chrome.storage.local.get(preferences.keys), initial = { ...settings };
+      for (const key of preferences.keys) if (!changedKeys.has(key)) initial[key] = saved[key];
+      settings = preferences.normalize(initial);
+    } catch { message('settings-status', 'settingsReadFailed'); }
     render();
-    ['theme-select', 'article-width', 'reset-reading-settings'].forEach(id => { $(id).disabled = false; });
+    ['language-select', 'theme-select', 'article-width', 'reset-reading-settings'].forEach(id => { $(id).disabled = false; });
   };
+  i18n.translate();
   render();
   restore();
   findPdfTarget();

@@ -81,13 +81,15 @@ button:hover { background: var(--hover); }
 .markdown-body pre { padding: var(--code-padding); overflow: auto; border: 1px solid var(--code-border); border-radius: var(--code-radius); color: var(--code-text); background: var(--code-surface); font: .875rem/1.6 var(--code-font); tab-size: 4; }
 .markdown-body pre code { display: block; padding: 0; color: inherit; background: none; font: inherit; white-space: pre; }
 .code-block { position: relative; margin: 0 0 16px; }
+:root { --copy-column: 84px; }
+:root:lang(en) { --copy-column: 110px; }
 .markdown-body .code-block pre { margin: 0; }
 .copy-code { padding: 3px 8px; font-size: 12px; color: var(--muted); opacity: 0; }
 .code-block:hover .copy-code, .code-block:focus-within .copy-code, .copy-code[data-feedback] { opacity: 1; }
 .copy-code:disabled { cursor: wait; }
 /* 复制按钮独立占列，避免遮住长行；屏幕网格不参与打印，PDF 使用整行代码宽度。 */
 @media screen {
-  .code-block { display: grid; grid-template-columns: minmax(0, 1fr) 84px; overflow: hidden; border: 1px solid var(--code-border); border-radius: var(--code-radius); background: var(--code-surface); }
+  .code-block { display: grid; grid-template-columns: minmax(0, 1fr) var(--copy-column); overflow: hidden; border: 1px solid var(--code-border); border-radius: var(--code-radius); background: var(--code-surface); }
   .markdown-body .code-block pre { min-width: 0; border: 0; border-radius: 0; }
   .copy-code { align-self: start; justify-self: end; margin: 8px; }
 }
