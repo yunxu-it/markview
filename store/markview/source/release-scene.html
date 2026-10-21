@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../../../markdown-preview/themes.css"><link rel="stylesheet" href="../../../markdown-preview/viewer.css"></head>
+<body><pre># 项目手册
+
+把项目说明、开发笔记与任务清单，整理成清晰易读的文档。
+
+## 项目概览
+
+使用 **章节** 定位当前文档，通过 **文件** 浏览已选择的 Markdown 文件夹。
+
+### 发布清单
+
+- [x] 加入中英双语界面
+- [x] 提供五套阅读主题
+- [x] 自由调整正文最大宽度
+- [ ] 分享前检查 PDF 排版
+
+### 阅读主题
+
+| 主题 | 使用场景 |
+| --- | --- |
+| 经典明亮 | 项目说明与技术文档 |
+| 暖纸阅读 | 长篇笔记与文章 |
+| 柔和深色 | 低亮度阅读 |
+| 书卷报告 | 正式文档 |
+| 绯红简约 | 紧凑的日常阅读 |
+
+## 开发笔记
+
+```javascript
+const document = {
+  name: "项目手册",
+  version: "1.3.0",
+  local: true
+};
+function openDocument(file) {
+  return file.text();
+}
+```
+
+## 导出 PDF
+
+&gt; 点击扩展图标打开阅读设置，选择“导出 PDF”，再在打印预览中选择“另存为 PDF”。
+
+切换界面语言时，文档正文和代码保持原文。</pre>
+<script src="release-env.js"></script><script src="../../../markdown-preview/markdown.js"></script><script src="../../../markdown-preview/i18n.js"></script><script src="../../../markdown-preview/settings.js"></script><script src="../../../markdown-preview/viewer.js"></script><script src="release-scene.js"></script>
+</body></html>

@@ -1,0 +1,11 @@
+# 本地生成的软件包、校验值和截图临时文件。
+/store/markview/*.zip
+/store/markview/SHA256.txt
+*.tmp
+.chrome-capture*/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+.env
+.env.*
