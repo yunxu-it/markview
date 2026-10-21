@@ -1,6 +1,6 @@
 # 墨览 · MarkView
 
-当前 manifest 版本：1.3.0。截至 2026-10-21，[Chrome 商店](https://chromewebstore.google.com/detail/ehpgkiagfgnbbmcfeemceglgfbojmcbk)已发布版本为 1.2.0，1.3.0 已提交商店审核，当前正在审核中。以下功能与使用说明以 1.3.0 源码为准；五套阅读主题、正文宽度设置、中英双语界面和 PDF 导出入口为 1.3.0 新增功能。打包方法、1.3.0 界面截图和隐私政策见 [项目资料](../store/markview/README.md)。
+当前 manifest 版本：1.3.0。截至 2026-10-21，[Chrome 商店](https://chromewebstore.google.com/detail/ehpgkiagfgnbbmcfeemceglgfbojmcbk)已公开发布 1.3.0，与本仓库源码版本一致。以下功能与使用说明对应 1.3.0；五套阅读主题、正文宽度设置、中英双语界面和 PDF 导出入口为此版本新增功能。打包方法、1.3.0 界面截图和隐私政策见 [项目资料](../store/markview/README.md)。
 
 无需构建、无需外部依赖的 Chrome Manifest V3 扩展。
 
@@ -12,7 +12,7 @@
 
 ### Chrome 商店安装
 
-前往 [墨览 · MarkView 商店页面](https://chromewebstore.google.com/detail/ehpgkiagfgnbbmcfeemceglgfbojmcbk) 安装。当前商店提供 1.2.0，实际可安装版本以商店页面为准；安装后如需直接预览本地文件，请在扩展「详情」中开启「允许访问文件网址」。
+前往 [墨览 · MarkView 商店页面](https://chromewebstore.google.com/detail/ehpgkiagfgnbbmcfeemceglgfbojmcbk) 安装。当前商店提供 1.3.0，实际可安装版本以商店页面为准；安装后如需直接预览本地文件，请在扩展「详情」中开启「允许访问文件网址」。
 
 ### 源码加载（1.3.0）
 

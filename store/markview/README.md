@@ -2,7 +2,7 @@
 
 扩展本身无需构建，可直接加载仓库内的 `markdown-preview` 目录。本目录保存打包脚本、公开示例、截图素材与隐私政策。
 
-截至 2026-10-21，[Chrome 商店](https://chromewebstore.google.com/detail/ehpgkiagfgnbbmcfeemceglgfbojmcbk)已发布版本为 1.2.0，1.3.0 已提交商店审核，当前正在审核中。本目录的当前源码打包和截图资料对应 1.3.0。
+截至 2026-10-21，[Chrome 商店](https://chromewebstore.google.com/detail/ehpgkiagfgnbbmcfeemceglgfbojmcbk)已公开发布 1.3.0。本目录的当前源码打包和截图资料对应此版本。
 
 ## 打包
 
