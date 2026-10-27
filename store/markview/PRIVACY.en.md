@@ -1,7 +1,7 @@
 # MarkView Privacy Policy
 
 Effective date: 2026-10-20
-Applies to version: 1.3.0, 1.4.0
+Applies to: the MarkView browser extension
 
 ## Local document processing
 

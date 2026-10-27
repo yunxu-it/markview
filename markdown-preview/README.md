@@ -1,6 +1,6 @@
 # 墨览 · MarkView
 
-当前 manifest 版本：1.4.0（待发布）。截至 2026-10-21，已确认 [Chrome 商店](https://chromewebstore.google.com/detail/ehpgkiagfgnbbmcfeemceglgfbojmcbk)公开发布 1.3.0；本次 1.4.0 尚未上传或提交审核。以下功能与使用说明对应当前源码，新增 Markdown 格式检查提示。打包方法、1.3.0 历史截图和隐私政策见 [项目资料](../store/markview/README.md)，发布材料见 [CHROMEWEBSTORE.md](../CHROMEWEBSTORE.md)。
+当前 manifest 版本：1.4.0（待发布）。截至 2026-10-21，已确认 [Chrome 商店](https://chromewebstore.google.com/detail/ehpgkiagfgnbbmcfeemceglgfbojmcbk)公开发布 1.3.0；本次 1.4.0 已上传 ZIP 并更新产品详情，提审及上线状态尚未确认。以下功能与使用说明对应当前源码，新增 Markdown 格式检查提示。打包方法、1.3.0 历史截图和隐私政策见 [项目资料](../store/markview/README.md)，发布材料见 [CHROMEWEBSTORE.md](../CHROMEWEBSTORE.md)。
 
 无需构建、无需外部依赖的 Chrome Manifest V3 扩展。
 
@@ -42,7 +42,7 @@
 ## 功能
 
 - 新增正文上方的折叠式格式检查：提示疑似缺少表格分隔行、表头与分隔行列数不一致、数据行多列／少列、链接／图片结束标记不完整、代码块围栏未闭合，并显示原文行号及修改建议。有意留空的数据行可忽略少列提醒；检查不修改原文、不额外存储正文，提示不进入 PDF。可直接打开 [本地试验页](../store/markview/source/format-playground.html)，选择正常／错误样例、编辑源文并下载 Markdown。
-- 「界面语言 / Interface language」可选择跟随浏览器、简体中文或 English。默认跟随 Chrome 界面语言，中文语言环境使用简体中文，其他环境使用英文；手动选择优先，保存为 language: auto / zh-CN / en，刷新后恢复并同步到已打开的预览页。覆盖设置页、主题名称、侧栏、复制状态、搜索数量、权限与错误提示、欢迎页及无障碍标签，更新页面 lang；文档正文、文档标题、文件名和代码原文保持原样。英文主题依次为 Classic Light、Warm Paper、Soft Dark、Serif Report、Crimson Minimal。
+- 「界面语言 / Interface language」可选择跟随浏览器、简体中文或 English。默认跟随 Chrome 界面语言，中文语言环境使用简体中文，其他环境使用英文；手动选择优先，保存为 language: auto / zh-CN / en，刷新后恢复并同步到已打开的预览页。覆盖设置页、主题名称、侧栏、复制状态、搜索数量、原有权限与错误提示、欢迎页及无障碍标签，更新页面 lang；1.4.0 新增格式检查提示目前仅提供中文。文档正文、文档标题、文件名和代码原文保持原样。英文主题依次为 Classic Light、Warm Paper、Soft Dark、Serif Report、Crimson Minimal。
 - 扩展图标弹出「阅读设置」，可选择经典明亮、暖纸阅读、柔和深色、书卷报告、绯红简约；侧栏不再包含设置入口。首次使用经典明亮，已打开的预览页实时同步设置，刷新或重新打开时恢复上次选择；保存失败会显示提示。五套主题沿用原有 github、warm、dark、report、bear 标识，只调整显示名称，已有偏好继续生效。
 - 经典明亮保留 GitHub 风格的白底、蓝色链接、16px 正文和 1.6 倍行距，补齐函数、变量、属性、类型等代码配色，适合技术文档。
 - 暖纸阅读采用米白背景、17px 正文和 1.78 倍行距，配合暖色代码框、浅底引用及横向表格分隔，减少长文阅读时的空散感。

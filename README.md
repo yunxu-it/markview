@@ -21,7 +21,7 @@
 
 ### Chrome 商店安装
 
-前往 [墨览 · MarkView 商店页面](https://chromewebstore.google.com/detail/ehpgkiagfgnbbmcfeemceglgfbojmcbk) 安装。此前已确认发布的是 1.3.0，实际可安装版本以商店页面为准；本次 1.4.0 尚未上传或提交审核。
+前往 [墨览 · MarkView 商店页面](https://chromewebstore.google.com/detail/ehpgkiagfgnbbmcfeemceglgfbojmcbk) 安装。此前已确认发布的是 1.3.0，实际可安装版本以商店页面为准；本次 1.4.0 已上传 ZIP 并更新产品详情，提审及上线状态尚未确认。
 
 安装后如需直接预览本地文件，请在扩展「详情」中开启「允许访问文件网址」。
 
