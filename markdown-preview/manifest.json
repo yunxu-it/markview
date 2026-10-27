@@ -15,7 +15,7 @@
   "content_scripts": [{
     "matches": ["file:///*"],
     "include_globs": ["file:///*.md", "file:///*.md#*", "file:///*.markdown", "file:///*.markdown#*", "file:///*.MD", "file:///*.MD#*", "file:///*.mdown", "file:///*.mdown#*"],
-    "js": ["markdown.js", "i18n.js", "settings.js", "viewer.js"],
+    "js": ["markdown.js", "format-diagnostics.js", "i18n.js", "settings.js", "viewer.js"],
     "css": ["themes.css", "viewer.css"],
     "run_at": "document_idle"
   }]

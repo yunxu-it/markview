@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>格式检查试验页 · MarkView</title>
+  <link rel="icon" href="../../../markdown-preview/icons/icon-32.png">
+  <link rel="stylesheet" href="../../../markdown-preview/themes.css">
+  <link rel="stylesheet" href="../../../markdown-preview/viewer.css">
+  <link rel="stylesheet" href="format-playground.css">
+  <script src="../../../markdown-preview/markdown.js" defer></script>
+  <script src="../../../markdown-preview/format-diagnostics.js" defer></script>
+  <script src="format-playground.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#source">跳到 Markdown 输入</a>
+  <main class="playground" id="playground-top">
+    <header>
+      <p class="eyebrow">墨览 · MarkView</p>
+      <h1>格式检查试验页</h1>
+      <p class="intro">选一个样例，改一改 Markdown，看看预览和格式提示怎样变化。</p>
+    </header>
+    <div class="playground-controls">
+      <label for="sample">试验样例<select id="sample" aria-describedby="sample-help"></select></label>
+      <label for="theme">阅读主题<select id="theme">
+        <option value="github">经典明亮</option>
+        <option value="warm">暖纸阅读</option>
+        <option value="dark">柔和深色</option>
+        <option value="report">书卷报告</option>
+        <option value="bear">绯红简约</option>
+      </select></label>
+      <button id="reset-sample" type="button">恢复当前样例</button>
+      <button id="download-sample" type="button">下载 Markdown</button>
+    </div>
+    <p id="sample-help">选择或恢复样例会替换输入内容。输入只保留在当前页面，刷新后恢复默认样例。</p>
+    <p id="sample-note"></p>
+    <p id="playground-status" role="status">正在加载试验页…</p>
+    <div class="playground-columns">
+      <section class="playground-card" aria-labelledby="source-title">
+        <h2 id="source-title"><label for="source">Markdown 源文</label></h2>
+        <p id="source-help">左侧行号对应格式提示中的位置，编辑后会自动更新右侧预览。</p>
+        <div class="source-editor">
+          <pre id="line-numbers" aria-hidden="true">1</pre>
+          <textarea id="source" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="source-help"></textarea>
+        </div>
+      </section>
+      <section class="playground-card preview-card" aria-labelledby="preview-title">
+        <h2 id="preview-title">预览与检测结果</h2>
+        <div class="preview-content">
+          <details id="format-check" hidden>
+            <summary id="format-summary"></summary>
+            <p>以下为疑似格式问题，仅供参考，不会修改原文。行号对应左侧 Markdown 源文。</p>
+            <ol id="format-issues"></ol>
+          </details>
+          <article id="article" class="markdown-body"></article>
+        </div>
+      </section>
+    </div>
+    <footer>可下载当前 Markdown，再用源码扩展打开，检查实际阅读页的提示。标题、列表等其他格式暂未纳入检查。</footer>
+    <noscript>请启用 JavaScript 后使用试验页。</noscript>
+  </main>
+</body>
+</html>

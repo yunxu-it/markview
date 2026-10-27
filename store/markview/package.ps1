@@ -6,7 +6,7 @@ $sourceRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../markdown-pr
 $manifest = Get-Content -LiteralPath (Join-Path $sourceRoot 'manifest.json') -Raw -Encoding utf8 | ConvertFrom-Json
 if ($manifest.version -notmatch '^\d+(\.\d+){0,3}$') { throw 'manifest version is invalid.' }
 $files = @(
-    'manifest.json', 'background.js', 'markdown.js', 'i18n.js', 'settings.js',
+    'manifest.json', 'background.js', 'markdown.js', 'format-diagnostics.js', 'i18n.js', 'settings.js',
     'viewer.js', 'viewer.html', 'viewer.css', 'themes.css', 'popup.html', 'popup.js', 'popup.css',
     '_locales/en/messages.json', '_locales/zh_CN/messages.json', 'LICENSE', 'licenses/bear-theme-MIT.txt',
     'icons/icon-16.png', 'icons/icon-32.png', 'icons/icon-48.png', 'icons/icon-128.png'

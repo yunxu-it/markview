@@ -144,7 +144,7 @@ globalThis.renderMarkdown = function (source, baseURL) {
     return output.join('');
   };
   const headings = [];
-  const used = new Map(['toggle', 'restore', 'sidebar', 'toc', 'main', 'status', 'article', 'open-menu', 'open-file', 'file-input', 'open-folder', 'folder-input', 'folder-fallback', 'resume-folder', 'forget-folder', 'view-chapters', 'view-files', 'chapters-section', 'files-section', 'files-hint', 'folder-name', 'files', 'sidebar-resizer', 'toc-search', 'toc-search-status'].map(id => [id, true]));
+  const used = new Map(['toggle', 'restore', 'sidebar', 'toc', 'main', 'status', 'article', 'open-menu', 'open-file', 'file-input', 'open-folder', 'folder-input', 'folder-fallback', 'resume-folder', 'forget-folder', 'view-chapters', 'view-files', 'chapters-section', 'files-section', 'files-hint', 'folder-name', 'files', 'sidebar-resizer', 'toc-search', 'toc-search-status', 'format-check', 'format-summary', 'format-issues'].map(id => [id, true]));
   const heading = (level, text) => {
     const plain = text.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/[*`~]/g, '');
     const slug = plain.toLowerCase().trim().replace(/[^\p{L}\p{N}_\s-]/gu, '').replace(/\s/g, '-') || 'section';
@@ -153,6 +153,16 @@ globalThis.renderMarkdown = function (source, baseURL) {
     used.set(id, true);
     headings.push({ level, text: plain, id });
     return `<h${level} id="${escape(id)}">${inline(text)}</h${level}>`;
+  };
+  // 读取等长反引号包围的代码片段，供表格分列和链接检查共用。
+  const codeSpanEnd = (text, index) => {
+    const run = text.slice(index).match(/^`+/)[0];
+    let end = index + run.length;
+    while ((end = text.indexOf(run, end)) !== -1) {
+      if (text[end - 1] !== '`' && text[end + run.length] !== '`') return end + run.length;
+      end += run.length;
+    }
+    return -1;
   };
   // 只在代码片段之外分列，同时保留转义竖线作为单元格内容。
   const cells = line => {
@@ -164,15 +174,10 @@ globalThis.renderMarkdown = function (source, baseURL) {
         index++; continue;
       }
       if (text[index] === '`') {
-        const run = text.slice(index).match(/^`+/)[0];
-        let end = index + run.length;
-        while ((end = text.indexOf(run, end)) !== -1) {
-          if (text[end - 1] !== '`' && text[end + run.length] !== '`') break;
-          end += run.length;
-        }
+        const end = codeSpanEnd(text, index);
         if (end !== -1) {
-          cell += text.slice(index, end + run.length);
-          index = end + run.length - 1; continue;
+          cell += text.slice(index, end);
+          index = end - 1; continue;
         }
       }
       if (text[index] === '|') { values.push(cell.trim()); cell = ''; }
@@ -184,7 +189,70 @@ globalThis.renderMarkdown = function (source, baseURL) {
     return values.length ? values : [''];
   };
   const lines = source.replace(/\r\n?/g, '\n').split('\n');
-  function blocks(lines) {
+  const diagnostics = [];
+  const delimiter = line => cells(line).every(cell => /^:?-{3,}:?$/.test(cell));
+  /**
+   * 检查已出现 ]( 的链接或图片是否完整，跳过转义、行内代码和引用式链接。
+   * @param {string} text 当前正文片段，可包含同一段落中的换行
+   * @param {number} startLine 片段在原文中的起始行号，从 1 开始
+   * @param {string} continuation 列表项后续的普通文本，仅供当前片段的链接跨行闭合
+   */
+  const checkLinks = (text, startLine, continuation = '') => {
+    const limit = text.length, labels = [];
+    text += continuation ? '\n' + continuation : '';
+    let lineNumber = startLine;
+    for (let index = 0; index < limit; index++) {
+      const char = text[index];
+      if (char === '\n') { lineNumber++; continue; }
+      if (char === '\\') { if (text[index + 1] === '\n') lineNumber++; index++; continue; }
+      if (char === '`') {
+        const end = codeSpanEnd(text, index);
+        if (end !== -1) {
+          lineNumber += text.slice(index, end).split('\n').length - 1;
+          index = end - 1; continue;
+        }
+        index += text.slice(index).match(/^`+/)[0].length - 1;
+        continue;
+      }
+      if (char === '[') { labels.push({ line: lineNumber, image: text[index - 1] === '!' }); continue; }
+      if (char !== ']') continue;
+      const label = labels.pop();
+      if (!label || text[index + 1] !== '(') continue;
+      let end = index + 2, depth = 1, quote = '', angle = false;
+      for (; end < text.length && depth; end++) {
+        const next = text[end];
+        if (next === '\\') { end++; continue; }
+        if (quote) { if (next === quote) quote = ''; continue; }
+        if (angle) { if (next === '>') angle = false; continue; }
+        // 尖括号地址与可选标题中的括号不参与目标地址的深度计算。
+        if (next === '<' && /^\s*$/.test(text.slice(index + 2, end))) { angle = true; continue; }
+        if ((next === '"' || next === "'") && /\s/.test(text[end - 1])) { quote = next; continue; }
+        if (next === '(') depth++;
+        if (next === ')') depth--;
+      }
+      if (depth) diagnostics.push({ type: 'unclosed-link', ...label });
+      else {
+        lineNumber += text.slice(index, end).split('\n').length - 1;
+        index = end - 1;
+      }
+    }
+  };
+  /**
+   * 仅对正文中连续、列数相同且带边界竖线的行提示疑似表格，减少普通文本误报。
+   * @param {string[]} paragraph 已排除围栏代码和标准表格的段落行
+   * @param {number} startLine 段落在原文中的起始行号，从 1 开始
+   */
+  const checkParagraph = (paragraph, startLine) => {
+    const columns = line => /^ {4}|^\t/.test(line) || !/^\s*\||\|\s*$/.test(line) ? 0 : cells(line).length;
+    for (let index = 0; index + 1 < paragraph.length; index++) {
+      const count = columns(paragraph[index]);
+      if (count < 2 || columns(paragraph[index + 1]) !== count || delimiter(paragraph[index]) || delimiter(paragraph[index + 1])) continue;
+      diagnostics.push({ type: 'table-separator', line: startLine + index, columns: count });
+      // 一组疑似表格只提示一次，不把每行数据都当成新表头。
+      while (index + 1 < paragraph.length && columns(paragraph[index + 1]) >= 2) index++;
+    }
+  };
+  function blocks(lines, startLine = 1) {
     let html = '', i = 0;
     const special = line => /^\s*$|^ {0,3}(#{1,6}\s|`{3,}|~{3,}|>|[-+*]\s|\d+[.)]\s)|^\s*([-*_])(?:\s*\1){2,}\s*$/.test(line);
     while (i < lines.length) {
@@ -192,29 +260,38 @@ globalThis.renderMarkdown = function (source, baseURL) {
       if (!line.trim()) { i++; continue; }
       const fence = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
       if (fence) {
-        const code = [];
+        const code = [], openingLine = startLine + i;
         i++;
         while (i < lines.length && !new RegExp(`^ {0,3}${fence[1][0]}{${fence[1].length},}\\s*$`).test(lines[i])) code.push(lines[i++]);
+        if (i === lines.length) diagnostics.push({ type: 'unclosed-fence', line: openingLine, fence: fence[1] });
         i++;
         html += `<pre><code data-language="${escape(fence[2].trim())}">${highlight(code.join('\n'), fence[2])}</code></pre>`;
         continue;
       }
       const title = line.match(/^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$/);
-      if (title) { html += heading(title[1].length, title[2]); i++; continue; }
+      if (title) { checkLinks(title[2], startLine + i); html += heading(title[1].length, title[2]); i++; continue; }
       if (i + 1 < lines.length && /^ {0,3}(=+|-+)\s*$/.test(lines[i + 1])) {
+        checkLinks(line, startLine + i);
         html += heading(lines[i + 1].trim()[0] === '=' ? 1 : 2, line); i += 2; continue;
       }
       if (/^\s*([-*_])(?:\s*\1){2,}\s*$/.test(line)) { html += '<hr>'; i++; continue; }
       if (/^ {0,3}>/.test(line)) {
-        const quote = [];
+        const quote = [], quoteLine = startLine + i;
         while (i < lines.length && /^ {0,3}>/.test(lines[i])) quote.push(lines[i++].replace(/^ {0,3}> ?/, ''));
-        html += `<blockquote>${blocks(quote)}</blockquote>`; continue;
+        html += `<blockquote>${blocks(quote, quoteLine)}</blockquote>`; continue;
       }
-      if (i + 1 < lines.length && line.includes('|') && cells(lines[i + 1]).every(cell => /^:?-{3,}:?$/.test(cell))) {
+      if (i + 1 < lines.length && line.includes('|') && delimiter(lines[i + 1])) {
         const headers = cells(line), alignment = cells(lines[i + 1]);
+        checkLinks(line, startLine + i);
+        if (headers.length !== alignment.length) diagnostics.push({ type: 'table-columns', line: startLine + i + 1, columns: headers.length, actual: alignment.length });
         const row = (values, tag) => '<tr>' + headers.map((_, n) => `<${tag} class="align-${alignment[n]?.endsWith(':') ? (alignment[n].startsWith(':') ? 'center' : 'right') : 'left'}">${inline(values[n] || '')}</${tag}>`).join('') + '</tr>';
         html += '<div class="table-scroll"><table><thead>' + row(headers, 'th') + '</thead><tbody>'; i += 2;
-        while (i < lines.length && lines[i].includes('|') && lines[i].trim()) html += row(cells(lines[i++]), 'td');
+        while (i < lines.length && lines[i].includes('|') && lines[i].trim()) {
+          const values = cells(lines[i]);
+          if (values.length !== headers.length) diagnostics.push({ type: 'table-row', line: startLine + i, columns: headers.length, actual: values.length });
+          checkLinks(lines[i], startLine + i);
+          html += row(values, 'td'); i++;
+        }
         html += '</tbody></table></div>'; continue;
       }
       const list = line.match(/^( *)([-+*]|\d+[.)])\s+(.*)$/);
@@ -224,19 +301,24 @@ globalThis.renderMarkdown = function (source, baseURL) {
         while (i < lines.length) {
           const item = lines[i].match(/^( *)([-+*]|\d+[.)])\s+(.*)$/);
           if (!item || item[1].length !== indent || /^\d/.test(item[2]) !== ordered) break;
+          const itemLine = startLine + i;
           let body = item[3]; i++;
-          const nested = [];
+          const nested = [], nestedLine = startLine + i;
           while (i < lines.length && lines[i].trim() && /^\s/.test(lines[i]) && (lines[i].match(/^ */)[0].length > indent)) nested.push(lines[i++].slice(Math.min(indent + 2, lines[i - 1].match(/^ */)[0].length)));
+          const nextBlock = nested.findIndex(special);
+          checkLinks(body, itemLine, nested.slice(0, nextBlock < 0 ? nested.length : nextBlock).join('\n'));
           const task = body.match(/^\[([ xX])\]\s+(.*)$/);
-          html += `<li${task ? ' class="task"' : ''}>${task ? `<input type="checkbox" disabled ${task[1] !== ' ' ? 'checked' : ''}> ${inline(task[2])}` : inline(body)}${nested.length ? blocks(nested) : ''}</li>`;
+          html += `<li${task ? ' class="task"' : ''}>${task ? `<input type="checkbox" disabled ${task[1] !== ' ' ? 'checked' : ''}> ${inline(task[2])}` : inline(body)}${nested.length ? blocks(nested, nestedLine) : ''}</li>`;
         }
         html += `</${tag}>`; continue;
       }
-      const paragraph = [line]; i++;
-      while (i < lines.length && !special(lines[i]) && !(i + 1 < lines.length && (/^\s*(=+|-+)\s*$/.test(lines[i + 1]) || (lines[i].includes('|') && cells(lines[i + 1]).every(cell => /^:?-{3,}:?$/.test(cell)))))) paragraph.push(lines[i++]);
+      const paragraph = [line], paragraphLine = startLine + i; i++;
+      while (i < lines.length && !special(lines[i]) && !(i + 1 < lines.length && (/^\s*(=+|-+)\s*$/.test(lines[i + 1]) || (lines[i].includes('|') && delimiter(lines[i + 1]))))) paragraph.push(lines[i++]);
+      checkParagraph(paragraph, paragraphLine);
+      if (!/^ {4}|^\t/.test(paragraph[0])) checkLinks(paragraph.join('\n'), paragraphLine);
       html += `<p>${paragraph.map(inline).join('\n')}</p>`;
     }
     return html;
   }
-  return { html: blocks(lines), headings };
+  return { html: blocks(lines), headings, diagnostics };
 };

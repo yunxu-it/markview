@@ -46,7 +46,13 @@
       </div>
     </aside>
     <div id="sidebar-resizer" role="separator" tabindex="0" data-i18n-aria-label="resizerLabel" data-i18n-title="resizerTitle" aria-label="调整目录宽度" aria-orientation="vertical" aria-controls="sidebar" title="拖动调整目录宽度，双击恢复默认；方向键微调，Enter 恢复默认"></div>
-    <main id="main" tabindex="-1"><div id="status" role="status"></div><article class="markdown-body" id="article"></article></main>`;
+    <main id="main" tabindex="-1"><div id="status" role="status"></div>
+      <details id="format-check" lang="zh-CN" hidden>
+        <summary id="format-summary"></summary>
+        <p>以下为疑似格式问题，仅供参考，不会修改原文。行号对应 Markdown 源文件。</p>
+        <ol id="format-issues"></ol>
+      </details>
+      <article class="markdown-body" id="article"></article></main>`;
   const $ = id => document.getElementById(id);
   const message = (id, key, values) => i18n.set($(id), key, values);
   i18n.translate();
@@ -522,6 +528,7 @@
     copyTimers.forEach(timer => clearTimeout(timer));
     copyTimers.clear();
     $('article').innerHTML = result.html;
+    globalThis.MarkViewFormatDiagnostics.render($('format-check'), result.diagnostics);
     $('article').querySelectorAll('pre > code').forEach(code => {
       const pre = code.parentElement, block = document.createElement('div'), button = document.createElement('button');
       block.className = 'code-block';
