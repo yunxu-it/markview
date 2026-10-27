@@ -1,6 +1,6 @@
 # 墨览 · MarkView
 
-当前 manifest 版本：1.3.0。截至 2026-10-21，[Chrome 商店](https://chromewebstore.google.com/detail/ehpgkiagfgnbbmcfeemceglgfbojmcbk)已公开发布 1.3.0，与本仓库源码版本一致。以下功能与使用说明对应 1.3.0；五套阅读主题、正文宽度设置、中英双语界面和 PDF 导出入口为此版本新增功能。打包方法、1.3.0 界面截图和隐私政策见 [项目资料](../store/markview/README.md)。
+当前 manifest 版本：1.4.0（待发布）。截至 2026-10-21，已确认 [Chrome 商店](https://chromewebstore.google.com/detail/ehpgkiagfgnbbmcfeemceglgfbojmcbk)公开发布 1.3.0；本次 1.4.0 尚未上传或提交审核。以下功能与使用说明对应当前源码，新增 Markdown 格式检查提示。打包方法、1.3.0 历史截图和隐私政策见 [项目资料](../store/markview/README.md)，发布材料见 [CHROMEWEBSTORE.md](../CHROMEWEBSTORE.md)。
 
 无需构建、无需外部依赖的 Chrome Manifest V3 扩展。
 
@@ -12,9 +12,9 @@
 
 ### Chrome 商店安装
 
-前往 [墨览 · MarkView 商店页面](https://chromewebstore.google.com/detail/ehpgkiagfgnbbmcfeemceglgfbojmcbk) 安装。当前商店提供 1.3.0，实际可安装版本以商店页面为准；安装后如需直接预览本地文件，请在扩展「详情」中开启「允许访问文件网址」。
+前往 [墨览 · MarkView 商店页面](https://chromewebstore.google.com/detail/ehpgkiagfgnbbmcfeemceglgfbojmcbk) 安装。此前已确认发布的是 1.3.0，实际可安装版本以商店页面为准；安装后如需直接预览本地文件，请在扩展「详情」中开启「允许访问文件网址」。
 
-### 源码加载（1.3.0）
+### 源码加载（1.4.0）
 
 1. 打开 `chrome://extensions`，开启右上角「开发者模式」。
 2. 点击「加载已解压的扩展程序」，选择本目录 `markdown-preview`。
@@ -41,6 +41,7 @@
 
 ## 功能
 
+- 新增正文上方的折叠式格式检查：提示疑似缺少表格分隔行、表头与分隔行列数不一致、数据行多列／少列、链接／图片结束标记不完整、代码块围栏未闭合，并显示原文行号及修改建议。有意留空的数据行可忽略少列提醒；检查不修改原文、不额外存储正文，提示不进入 PDF。可直接打开 [本地试验页](../store/markview/source/format-playground.html)，选择正常／错误样例、编辑源文并下载 Markdown。
 - 「界面语言 / Interface language」可选择跟随浏览器、简体中文或 English。默认跟随 Chrome 界面语言，中文语言环境使用简体中文，其他环境使用英文；手动选择优先，保存为 language: auto / zh-CN / en，刷新后恢复并同步到已打开的预览页。覆盖设置页、主题名称、侧栏、复制状态、搜索数量、权限与错误提示、欢迎页及无障碍标签，更新页面 lang；文档正文、文档标题、文件名和代码原文保持原样。英文主题依次为 Classic Light、Warm Paper、Soft Dark、Serif Report、Crimson Minimal。
 - 扩展图标弹出「阅读设置」，可选择经典明亮、暖纸阅读、柔和深色、书卷报告、绯红简约；侧栏不再包含设置入口。首次使用经典明亮，已打开的预览页实时同步设置，刷新或重新打开时恢复上次选择；保存失败会显示提示。五套主题沿用原有 github、warm、dark、report、bear 标识，只调整显示名称，已有偏好继续生效。
 - 经典明亮保留 GitHub 风格的白底、蓝色链接、16px 正文和 1.6 倍行距，补齐函数、变量、属性、类型等代码配色，适合技术文档。
@@ -63,6 +64,7 @@
 
 ## 使用边界
 
+- 格式检查仅为启发式提示，缺少分隔行只检查至少两行、列数相同且带边界竖线的疑似表格；链接／图片只对已出现 `](` 的标记检查目标地址与可选标题闭合，不检查资源是否可访问。新增格式提示暂为中文，切换界面语言不翻译，后续另行处理。
 - 扩展管理页名称、描述和浏览器工具栏悬停标题通过 Chrome 本地化资源跟随浏览器语言；弹窗内的手动语言选择作用于 MarkView 页面，不修改浏览器或扩展管理页语言。当前仅提供简体中文和英文，浏览器原生选择器、权限提示与打印界面的语言由浏览器控制。界面词条内置于 i18n.js，扩展元数据位于 _locales，无需网络、远程翻译或新增依赖；规则参考 [Chrome i18n 文档](https://developer.chrome.com/docs/extensions/reference/api/i18n)。
 - 内置轻量解析器覆盖常用语法，不承诺完整 CommonMark / GFM 兼容性；暂不支持数学公式、Mermaid、引用式链接。代码高亮是轻量词法识别，不是完整语言解析器，复杂正则、嵌入语言及模板表达式等可能只部分着色；未声明或未知语言按纯文本显示。高亮不执行代码，复制仍取代码原文。
 - 选择文件、选择文件夹及拖拽受浏览器保护，无法取得原始完整磁盘路径，因此不支持解析相对路径图片和跨文档相对链接。需要本地图片或相对链接时，请直接打开 `file://` 下的原文件。

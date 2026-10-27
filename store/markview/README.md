@@ -2,7 +2,7 @@
 
 扩展本身无需构建，可直接加载仓库内的 `markdown-preview` 目录。本目录保存打包脚本、公开示例、截图素材与隐私政策。
 
-截至 2026-10-21，[Chrome 商店](https://chromewebstore.google.com/detail/ehpgkiagfgnbbmcfeemceglgfbojmcbk)已公开发布 1.3.0。本目录的当前源码打包和截图资料对应此版本。
+当前源码打包版本为 1.4.0（待发布），发布材料见 [CHROMEWEBSTORE.md](../../CHROMEWEBSTORE.md)。截至 2026-10-21，已确认 [Chrome 商店](https://chromewebstore.google.com/detail/ehpgkiagfgnbbmcfeemceglgfbojmcbk)公开发布 1.3.0；现有截图仍为该历史版本，本次未重新生成截图。
 
 ## 打包
 
@@ -16,6 +16,8 @@
 
 脚本回读每个 ZIP 条目并与源码 SHA-256 比较。同版本 ZIP 已存在时默认拒绝覆盖，需要替换时显式传入 `-Force`。ZIP、校验文件和临时文件不纳入源码版本控制，生成包可作为 GitHub Release 附件发布。
 
+本次目标包为 `markview-1.4.0.zip`，包含新增运行文件 `format-diagnostics.js`；本地试验页和素材目录不进入扩展 ZIP。打包成功仅证明包内容与源码一致，不代表已通过 Chrome 安装、交互或商店审核。
+
 ## 格式检查试验页
 
 直接用浏览器打开 [format-playground.html](source/format-playground.html)，无需启动服务或安装扩展。内置正常格式、综合错误、表格缺少分隔行、表头与分隔行列数不一致、数据行多列／少列、链接／图片未闭合、代码块未闭合、代码与转义文本样例。
@@ -26,7 +28,7 @@
 
 ## 界面截图
 
-当前 1.3.0 中文截图位于 [assets/1.3.0/zh-CN](assets/1.3.0/zh-CN/)，英文截图位于 [assets/1.3.0/en](assets/1.3.0/en/)，尺寸为 1280×800。
+历史 1.3.0 中文截图位于 [assets/1.3.0/zh-CN](assets/1.3.0/zh-CN/)，英文截图位于 [assets/1.3.0/en](assets/1.3.0/en/)，尺寸为 1280×800。
 
 安装 Chrome 后，可在 PowerShell 7 中重新生成截图：
 

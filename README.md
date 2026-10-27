@@ -2,27 +2,30 @@
 
 用于本地 Markdown 阅读的 Chrome Manifest V3 扩展，无需构建、无需外部依赖。
 
-截至 2026-10-21，[Chrome 商店](https://chromewebstore.google.com/detail/ehpgkiagfgnbbmcfeemceglgfbojmcbk)已公开发布 **1.3.0**，与本仓库源码版本一致。
+当前源码版本为 **1.4.0（待发布）**，新增 Markdown 格式检查提示。截至 2026-10-21，已确认 [Chrome 商店](https://chromewebstore.google.com/detail/ehpgkiagfgnbbmcfeemceglgfbojmcbk)公开发布 **1.3.0**；实际可安装版本以商店页面为准。
 
 ## 功能
 
-以下功能介绍对应已发布的 1.3.0，其中五套阅读主题、正文宽度设置、中英双语界面和 PDF 导出入口为此版本新增功能。
+以下功能介绍对应当前 1.4.0 源码，格式检查为本次新增功能，商店版可能尚未包含。
 
 - 直接预览本地 Markdown 文件，也可选择或拖入文件。
 - 章节导航与搜索、只读文件夹浏览、阅读位置记忆。
 - 五套阅读主题、正文宽度设置、简体中文和 English 界面。
 - 代码高亮与复制，通过浏览器打印预览另存为 PDF。
+- 格式检查提示：表格分隔行与列数异常、链接／图片结束标记不完整、代码块未闭合；显示行号与建议，不修改原文。
 - 文档内容在本地处理，不上传正文。
+
+格式检查为启发式提示，新增提示文案暂为中文。可打开 [本地试验页](store/markview/source/format-playground.html) 对照样例与实时预览。
 
 ## 安装
 
 ### Chrome 商店安装
 
-前往 [墨览 · MarkView 商店页面](https://chromewebstore.google.com/detail/ehpgkiagfgnbbmcfeemceglgfbojmcbk) 安装。当前商店提供 1.3.0，实际可安装版本以商店页面为准。
+前往 [墨览 · MarkView 商店页面](https://chromewebstore.google.com/detail/ehpgkiagfgnbbmcfeemceglgfbojmcbk) 安装。此前已确认发布的是 1.3.0，实际可安装版本以商店页面为准；本次 1.4.0 尚未上传或提交审核。
 
 安装后如需直接预览本地文件，请在扩展「详情」中开启「允许访问文件网址」。
 
-### 源码加载（1.3.0）
+### 源码加载（1.4.0）
 
 1. 下载仓库源码并解压，或克隆仓库。
 2. 打开 `chrome://extensions`，开启「开发者模式」。
@@ -44,6 +47,7 @@
 
 - [源码与扩展目录](markdown-preview/)
 - [打包与素材生成](store/markview/README.md)
+- [1.4.0 商店发布材料](CHROMEWEBSTORE.md)
 - [隐私政策](store/markview/PRIVACY.md)
 - [手动验收清单](store/markview/source/regression.md)
 
